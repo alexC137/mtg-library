@@ -85,6 +85,13 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
     <div id="guide"><i></i><em>Fit the card in the frame, title in the dashed box</em></div>
   </div>
   <div id="nocam" class="hide"></div>
+  <div class="row" id="camctl" style="margin-top:8px">
+    <span style="color:var(--mute);font-size:13px">Zoom</span>
+    <input id="zoom" type="range" min="1" max="4" step="0.1" value="2" style="flex:1">
+    <b id="zoomv" style="min-width:38px;text-align:right">2.0×</b>
+    <button id="torch" class="btn sm hide">Light</button>
+  </div>
+  <div style="color:var(--mute);font-size:12px">Blurry? Hold the phone farther back (8–12 in) and zoom in. Phone cameras can't focus up close.</div>
   <div class="row" style="margin-top:10px">
     <button id="btnSnap" class="btn pri" style="flex:2">Scan card</button>
     <label class="btn" style="flex:1;text-align:center;margin:0">Photo<input id="file" type="file" accept="image/*" capture="environment" hidden></label>
@@ -174,8 +181,14 @@ async function startCam(){
   if(stream)return;
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){noCam('Live camera needs this page to be served over https. Use the Photo button instead.');return}
   try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:3840},height:{ideal:2160}},audio:false});
     cam.srcObject=stream;await cam.play().catch(()=>{});
+    // ask for continuous autofocus and show the light button where the phone supports them
+    try{
+      const tr=stream.getVideoTracks()[0],caps=tr.getCapabilities?tr.getCapabilities():{};
+      if(caps.focusMode&&caps.focusMode.indexOf('continuous')>=0)await tr.applyConstraints({advanced:[{focusMode:'continuous'}]});
+      torchOn=false;$('torch').classList.toggle('hide',!caps.torch);$('torch').classList.remove('pri');
+    }catch(e){}
     wrap.classList.remove('hide');$('nocam').classList.add('hide');layoutGuide();
   }catch(e){noCam('Camera unavailable ('+(e.name||'error')+'). Allow camera access, or use the Photo button.')}
 }
@@ -195,10 +208,18 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopCam();e
 // crop a region of the card guide (fractions of the guide box) out of the live video
 function grabRegion(fx,fy,fw,fh){
   const vw=cam.videoWidth,vh=cam.videoHeight;if(!vw||!stream)return null;
-  const g=guideRect(),sc=Math.max(g.cw/vw,g.ch/vh);
-  const ox=(vw*sc-g.cw)/2,oy=(vh*sc-g.ch)/2;
-  return crop(cam,(g.x+g.w*fx+ox)/sc,(g.y+g.h*fy+oy)/sc,g.w*fw/sc,g.h*fh/sc);
+  const g=guideRect(),sc=Math.max(g.cw/vw,g.ch/vh)*zoom; // video is centered, then zoomed about its center
+  return crop(cam,vw/2+(g.x+g.w*fx-g.cw/2)/sc,vh/2+(g.y+g.h*fy-g.ch/2)/sc,g.w*fw/sc,g.h*fh/sc);
 }
+let zoom=2,torchOn=false;
+try{zoom=Math.min(4,Math.max(1,parseFloat(localStorage.getItem('mtg-zoom'))||2))}catch(e){}
+function setZoom(z){zoom=z;cam.style.transform='scale('+z+')';$('zoomv').textContent=z.toFixed(1)+'×';$('zoom').value=z;try{localStorage.setItem('mtg-zoom',z)}catch(e){}}
+$('zoom').oninput=e=>setZoom(parseFloat(e.target.value));
+setZoom(zoom);
+$('torch').onclick=async()=>{
+  if(!stream)return;
+  try{torchOn=!torchOn;await stream.getVideoTracks()[0].applyConstraints({advanced:[{torch:torchOn}]});$('torch').classList.toggle('pri',torchOn)}catch(e){torchOn=false}
+};
 const grabTitle=()=>grabRegion(0.03,0.03,0.80,0.105);
 const grabMeta=()=>grabRegion(0.03,0.925,0.55,0.07);
 function crop(src,sx,sy,sw,sh){
