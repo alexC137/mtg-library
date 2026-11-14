@@ -24,7 +24,7 @@ button,select,input{font:inherit}
 .btn.sm{padding:6px 10px;font-size:14px}
 .row{display:flex;gap:8px;align-items:center}
 input[type=text],input[type=search],input[type=number],select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);min-width:0}
-#camwrap{position:relative;width:100%;height:42vh;max-height:440px;background:#000;border-radius:14px;overflow:hidden}
+#camwrap{position:relative;width:100%;height:38vh;max-height:420px;background:#000;border-radius:14px;overflow:hidden}
 #cam{width:100%;height:100%;object-fit:cover}
 #guide{position:absolute;border:2px solid rgba(240,180,41,.9);border-radius:10px;box-shadow:0 0 0 999px rgba(0,0,0,.45);pointer-events:none}
 #guide i{position:absolute;left:0;top:0;width:100%;height:16%;border-bottom:2px dashed #fff}
@@ -61,6 +61,9 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
 .grp span{color:var(--mute);font-size:13px;white-space:nowrap}
 .grp span strong{color:var(--ok)}
 .rc{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);font-size:14px}.rc span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rc small{color:var(--mute)}.rc button{border:1px solid var(--line);background:var(--bg);color:var(--bad);border-radius:8px;width:32px;height:28px}
+.dk{display:inline-flex;border-radius:50%;flex:none;vertical-align:middle;box-sizing:border-box}
+.dk img,.dk b{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:50% 20%;background:#14161b;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px;border:1px solid rgba(255,255,255,.35)}
 .summary{color:var(--mute);font-size:13px;margin:8px 0}
 .summary strong{color:var(--text)}
 #toast{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));background:#0b0d10;border:1px solid var(--ok);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;z-index:9}
@@ -82,6 +85,24 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
 
 <main>
 <section id="viewScan">
+  <div class="row" style="margin-bottom:6px">
+    <span id="deckIco"></span>
+    <select id="deckSel" style="flex:1;padding:8px"></select>
+    <button id="sbBtn" class="btn sm hide">Main deck</button>
+    <button id="deckEdit" class="btn sm hide">Edit</button>
+  </div>
+  <div id="deckForm" class="card hide" style="margin:0 0 8px">
+    <div style="font-weight:600" id="dfTitle">New deck</div>
+    <div class="chips" id="dfColors"></div>
+    <input id="dfPw" type="text" placeholder="Planeswalker (optional)" style="margin-top:8px">
+    <input id="dfName" type="text" placeholder="Deck name (optional)" style="margin-top:8px">
+    <div class="row" style="margin-top:8px">
+      <button id="dfSave" class="btn ok" style="flex:1">Save deck</button>
+      <button id="dfCancel" class="btn">Cancel</button>
+      <button id="dfDelete" class="btn hide" style="color:var(--bad)">Delete</button>
+    </div>
+    <div id="dfMsg" style="color:var(--mute);font-size:13px;margin-top:6px"></div>
+  </div>
   <div id="camwrap">
     <video id="cam" playsinline muted autoplay></video>
     <div id="guide"><i></i><em>Card name goes above the dashed line</em></div>
@@ -107,7 +128,12 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
     <button id="torch" class="btn sm hide">Light</button>
     <button id="swap" class="btn sm hide">Camera</button>
   </div>
-  <div style="color:var(--mute);font-size:12px" id="caminfo"></div>
+  <div class="row hide" id="expRow" style="margin-top:8px">
+    <span style="color:var(--mute);font-size:13px">Brightness</span>
+    <input id="exp" type="range" style="flex:1">
+    <b id="expv" style="min-width:38px;text-align:right">0</b>
+  </div>
+  <div style="color:var(--mute);font-size:12px"><span id="caminfo"></span> <span id="eng"></span></div>
   <div class="row" style="margin-top:8px">
     <input id="manual" type="search" placeholder="Or type a card name…" enterkeyhint="search">
     <button id="btnManual" class="btn">Find</button>
@@ -119,11 +145,13 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
   <input id="filter" type="search" placeholder="Search name or set…">
   <div class="filters">
     <div><label>Group by</label><select id="group">
-      <option value="none">No grouping</option><option value="set">Set</option><option value="color">Color</option>
+      <option value="none">No grouping</option><option value="deck">Deck</option><option value="set">Set</option><option value="color">Color</option>
       <option value="type">Card type</option><option value="rarity">Rarity</option></select></div>
     <div><label>Sort by</label><select id="sort">
       <option value="value">Total value</option><option value="price">Unit price</option>
       <option value="name">Name</option><option value="cmc">Mana value</option><option value="recent">Recently added</option></select></div>
+    <div><label>Deck</label><select id="fDeck"></select></div>
+    <div><label>Main / sideboard</label><select id="fBoard"><option value="">Both</option><option value="m">Main deck</option><option value="s">Sideboard</option></select></div>
     <div><label>Set</label><select id="fSet"></select></div>
     <div><label>Card type</label><select id="fType"></select></div>
     <div><label>Rarity</label><select id="fRar">
@@ -139,6 +167,12 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
     <button class="chip" id="fClear">Clear filters</button>
   </div>
   <div class="summary" id="summary"></div>
+  <div class="row" style="margin-bottom:6px">
+    <span style="color:var(--mute);font-size:12px;white-space:nowrap">Move to</span>
+    <select id="mvDeck" style="flex:2;padding:7px"></select>
+    <select id="mvBoard" style="flex:1;padding:7px"><option value="m">Main</option><option value="s">Side</option></select>
+    <button id="mvAll" class="btn sm">All shown</button>
+  </div>
   <div id="list"></div>
   <div class="tools">
     <button id="btnRefresh" class="btn sm">Refresh prices</button>
@@ -189,28 +223,44 @@ async function startCam(){
   if(stream)return;
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){noCam('Live camera needs this page to be served over https. Use the Photo button instead.');return}
   try{
-    const size={width:{ideal:3840},height:{ideal:2160}},back={facingMode:{ideal:'environment'}};
+    const size={width:{ideal:1920},height:{ideal:1080}},back={facingMode:{ideal:'environment'}};
     try{stream=await navigator.mediaDevices.getUserMedia({video:Object.assign(camId?{deviceId:{exact:camId}}:back,size),audio:false})}
     catch(e){if(!camId)throw e;camId=null;stream=await navigator.mediaDevices.getUserMedia({video:Object.assign(back,size),audio:false})}
     cam.srcObject=stream;await cam.play().catch(()=>{});
-    // ask for continuous autofocus and show the light button where the phone supports them
-    try{
-      const tr=stream.getVideoTracks()[0],caps=tr.getCapabilities?tr.getCapabilities():{};
-      if(caps.focusMode&&caps.focusMode.indexOf('continuous')>=0)await tr.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});
-      torchOn=false;$('torch').classList.toggle('hide',!caps.torch);$('torch').classList.remove('pri');
-      // prefer the camera's own zoom (keeps full detail); fall back to enlarging the picture
-      hwZoom=caps.zoom&&caps.zoom.max>caps.zoom.min?caps.zoom:null;
-      const zs=$('zoom');zs.min=hwZoom?hwZoom.min:1;zs.max=hwZoom?Math.min(hwZoom.max,8):4;
-      setZoom(Math.min(+zs.max,Math.max(+zs.min,zoomVal)));
-      const st=tr.getSettings();
-      $('caminfo').textContent='Camera: '+st.width+'×'+st.height+(hwZoom?', camera zoom.':', digital zoom.');
-    }catch(e){}
+    camFeatures();setTimeout(camFeatures,900); // phones report some lens features a moment late
     await listCams();
     if(!camId&&!probed){probed=true;await pickMainCam()}
     wrap.classList.remove('hide');$('nocam').classList.add('hide');layoutGuide();
   }catch(e){noCam('Camera unavailable ('+(e.name||'error')+'). Allow camera access, or use the Photo button.')}
 }
-function stopCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
+// continuous autofocus, light button, zoom range and picture brightness, where the phone supports them
+function camFeatures(){
+  try{
+    if(!stream)return;
+    const tr=stream.getVideoTracks()[0],caps=tr.getCapabilities?tr.getCapabilities():{};
+    if(caps.focusMode&&caps.focusMode.indexOf('continuous')>=0)tr.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});
+    $('torch').classList.toggle('hide',!caps.torch);$('torch').classList.toggle('pri',torchOn);
+    hwZoom=caps.zoom&&caps.zoom.max>caps.zoom.min?caps.zoom:null;
+    const zs=$('zoom');zs.min=hwZoom?hwZoom.min:1;zs.max=hwZoom?Math.min(hwZoom.max,8):4;
+    setZoom(Math.min(+zs.max,Math.max(+zs.min,zoomVal)));
+    const ec=caps.exposureCompensation;
+    if(ec&&ec.max>ec.min){
+      const xs=$('exp');xs.min=ec.min;xs.max=ec.max;xs.step=ec.step||0.1;
+      let v=NaN;try{v=parseFloat(localStorage.getItem('mtg-exp'))}catch(e){}
+      v=isNaN(v)?0:Math.min(ec.max,Math.max(ec.min,v));xs.value=v;$('expv').textContent=v.toFixed(1);
+      $('expRow').classList.remove('hide');
+      if(v)tr.applyConstraints({advanced:[{exposureCompensation:v}]}).catch(()=>{});
+    }else $('expRow').classList.add('hide');
+    const st=tr.getSettings();
+    $('caminfo').textContent='Camera: '+st.width+'×'+st.height+(hwZoom?', camera zoom.':', digital zoom.');
+  }catch(e){}
+}
+$('exp').oninput=e=>{
+  const v=parseFloat(e.target.value);$('expv').textContent=v.toFixed(1);
+  try{localStorage.setItem('mtg-exp',v)}catch(_){}
+  if(stream)stream.getVideoTracks()[0].applyConstraints({advanced:[{exposureCompensation:v}]}).catch(()=>{});
+};
+function stopCam(){torchOn=false;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
 function noCam(t){wrap.classList.add('hide');const n=$('nocam');n.textContent=t;n.classList.remove('hide')}
 function guideRect(){
   const cw=wrap.clientWidth,ch=wrap.clientHeight;
@@ -285,7 +335,7 @@ $('torch').onclick=async()=>{
   if(!stream)return;
   try{torchOn=!torchOn;await stream.getVideoTracks()[0].applyConstraints({advanced:[{torch:torchOn}]});$('torch').classList.toggle('pri',torchOn)}catch(e){torchOn=false}
 };
-const grabTop=()=>grabRegion(-0.02,-0.01,1.04,0.15,1100);   // whole top band of the card, so alignment is forgiving
+const grabTop=()=>grabRegion(-0.02,-0.01,1.04,0.15,1000);   // whole top band of the card, so alignment is forgiving
 const grabMeta=()=>grabRegion(0.02,0.915,0.62,0.08,900);
 function crop(src,sx,sy,sw,sh,tw){
   const scale=Math.min(4,(tw||1200)/sw);
@@ -326,19 +376,37 @@ function showDbg(img){
 
 /* ---------- OCR ---------- */
 let workerP=null;
+const NAMECHARS="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ',-";
 function getWorker(){
   if(!window.Tesseract)return Promise.reject(new Error('Text recognition did not load (no connection?). Type the name instead.'));
-  if(!workerP)workerP=Tesseract.createWorker('eng').then(async w=>{await w.setParameters({tessedit_pageseg_mode:'6',user_defined_dpi:'300'});return w}).catch(e=>{workerP=null;throw e});
+  if(!workerP){
+    const tune=kind=>async w=>{await w.setParameters({tessedit_pageseg_mode:'6',user_defined_dpi:'300'});$('eng').textContent='Reader: '+kind+'.';return w};
+    // The "fast" language model reads noticeably quicker. If it can't be fetched, use the standard one.
+    const fast=Promise.race([
+      Tesseract.createWorker('eng',1,{langPath:'https://tessdata.projectnaptha.com/4.0.0_fast',cachePath:'fast'}).then(tune('fast')),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),12000))
+    ]);
+    workerP=fast.catch(()=>Tesseract.createWorker('eng').then(tune('standard'))).catch(e=>{workerP=null;throw e});
+  }
   return workerP;
 }
-let ocrChain=Promise.resolve(),psmNow='6';
-function ocr(canvas,psm){ // one job at a time, so layout settings never mix between jobs
-  const job=ocrChain.then(async()=>{
-    const w=await getWorker();psm=psm||'6';
-    if(psm!==psmNow){await w.setParameters({tessedit_pageseg_mode:psm});psmNow=psm}
-    return (await w.recognize(canvas)).data;
-  });
-  ocrChain=job.catch(()=>{});return job;
+// One job at a time. Name reads go ahead of background printing checks.
+// mode '7' = a single line of name letters (quick); '6' = a block of any text.
+const OCRSET={'6':{tessedit_pageseg_mode:'6',tessedit_char_whitelist:''},'7':{tessedit_pageseg_mode:'7',tessedit_char_whitelist:NAMECHARS}};
+const ocrHi=[],ocrLo=[];let ocrRun=false,modeNow='6';
+function ocr(canvas,mode,low){return new Promise((res,rej)=>{(low?ocrLo:ocrHi).push({canvas,mode:mode||'6',res,rej});ocrPump()})}
+async function ocrPump(){
+  if(ocrRun)return;ocrRun=true;
+  try{
+    let j;
+    while((j=ocrHi.shift()||ocrLo.shift())){
+      try{
+        const w=await getWorker();
+        if(j.mode!==modeNow){await w.setParameters(OCRSET[j.mode]);modeNow=j.mode}
+        j.res((await w.recognize(j.canvas)).data);
+      }catch(e){j.rej(e)}
+    }
+  }finally{ocrRun=false}
 }
 // Turn raw OCR output into likely card names, most likely first.
 function candidates(data){
@@ -439,7 +507,7 @@ function beep(){
     o.frequency.value=1250;g.gain.value=0.08;o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+0.07)}catch(e){}
 }
 function renderRecent(){
-  $('recent').innerHTML=recent.length?'<div style="color:var(--mute);font-size:12px;margin-top:8px">Just added</div>'+recent.map((r,i)=>`<div class="rc"><span>${esc(r.name)} <small>${esc(r.setName)} · ${r.price!=null?money(r.price):'no price'}</small></span><button data-i="${i}">✕</button></div>`).join(''):'';
+  $('recent').innerHTML=recent.length?'<div style="color:var(--mute);font-size:12px;margin-top:8px">Just added</div>'+recent.map((r,i)=>`<div class="rc"><span>${esc(r.name)} <small>${esc(r.setName)} · ${r.price!=null?money(r.price):'no price'}${r.where?' · '+esc(r.where):''}</small></span><button data-i="${i}">✕</button></div>`).join(''):'';
 }
 $('recent').onclick=e=>{
   const b=e.target.closest('button');if(!b)return;
@@ -449,15 +517,16 @@ $('recent').onclick=e=>{
   if(lastAdd&&lastAdd.k===r.k)lastAdd=null;
   save();updateStats();renderRecent();
 };
-function addToLib(c,foil,n){
-  const k=c.id+(foil?'f':'n');
+function addToLib(c,foil,n,tgt){ // tgt = {deck,sb}; defaults to the deck currently being scanned
+  tgt=tgt||{deck:curDeck,sb:curSb};
+  const k=keyOf(c.id,foil,tgt.deck,tgt.sb);
   let it=lib.find(x=>x.k===k);
   if(it)it.qty+=n;
-  else{it=Object.assign({k,id:c.id,foil,qty:n,price:priceOf(c,foil),added:Date.now()},meta(c));lib.push(it)}
+  else{it=Object.assign({k,id:c.id,foil,qty:n,price:priceOf(c,foil),added:Date.now(),deck:tgt.deck,sb:!!tgt.sb&&!!tgt.deck},meta(c));lib.push(it)}
   save();updateStats();
   lastAdd={k,n};
-  recent.unshift({k,n,name:c.name,setName:c.set_name,price:it.price});if(recent.length>4)recent.length=4;renderRecent();beep();
-  $('toastText').innerHTML='<b>Added '+esc(c.name)+(n>1?' ×'+n:'')+'</b><br><span style="color:var(--mute);font-size:12px">'+esc(c.set_name)+' · '+(it.price!=null?money(it.price):'no price')+'</span>';
+  recent.unshift({k,n,name:c.name,setName:c.set_name,price:it.price,where:whereOf(it)});if(recent.length>4)recent.length=4;renderRecent();beep();
+  $('toastText').innerHTML='<b>Added '+esc(c.name)+(n>1?' ×'+n:'')+'</b><br><span style="color:var(--mute);font-size:12px">'+esc(c.set_name)+' · '+(it.price!=null?money(it.price):'no price')+(whereOf(it)?' · '+esc(whereOf(it)):'')+'</span>';
   $('toast').classList.remove('hide');clearTimeout(toastT);toastT=setTimeout(()=>$('toast').classList.add('hide'),4500);
   if(navigator.vibrate)navigator.vibrate(40);
 }
@@ -538,7 +607,7 @@ async function cardFor(name){
 async function exactPrint(card,corner){
   try{
     if(!corner)return card;
-    const t=((await ocr(prep(corner,'gray'),'6')).text||'').toUpperCase();
+    const t=((await ocr(prep(corner,'gray'),'6',true)).text||'').toUpperCase();
     const num=(t.match(/\b0*(\d{1,4})\s*\/\s*\d{2,4}/)||t.match(/\b0*(\d{1,4})\b/)||[])[1];
     const set=(t.match(/\b([A-Z][A-Z0-9]{2,4})\s*[^A-Z0-9\s]?\s*EN\b/)||[])[1];
     if(!num||!set)return card;
@@ -555,14 +624,15 @@ async function showThenRefine(card,corner){
 }
 // Add immediately, then correct the printing in the background if the corner text says otherwise.
 function addFast(card,corner){
-  addToLib(card,false,1);
-  if(corner)exactPrint(card,corner).then(c=>{if(c.id!==card.id)swapPrint(card,c)}).catch(()=>{});
+  const tgt={deck:curDeck,sb:curSb};
+  addToLib(card,false,1,tgt);
+  if(corner)exactPrint(card,corner).then(c=>{if(c.id!==card.id)swapPrint(card,c,tgt)}).catch(()=>{});
 }
-function swapPrint(a,b){ // move one non-foil copy from printing a to printing b
-  const ka=a.id+'n',kb=b.id+'n',it=lib.find(x=>x.k===ka);if(!it)return;
+function swapPrint(a,b,tgt){ // move one non-foil copy from printing a to printing b, in the same deck
+  const ka=keyOf(a.id,false,tgt.deck,tgt.sb),kb=keyOf(b.id,false,tgt.deck,tgt.sb),it=lib.find(x=>x.k===ka);if(!it)return;
   it.qty--;if(it.qty<=0)lib=lib.filter(x=>x!==it);
   let nb=lib.find(x=>x.k===kb);
-  if(nb)nb.qty++;else{nb=Object.assign({k:kb,id:b.id,foil:false,qty:1,price:priceOf(b,false),added:Date.now()},meta(b));lib.push(nb)}
+  if(nb)nb.qty++;else{nb=Object.assign({k:kb,id:b.id,foil:false,qty:1,price:priceOf(b,false),added:Date.now(),deck:tgt.deck,sb:!!tgt.sb&&!!tgt.deck},meta(b));lib.push(nb)}
   if(lastAdd&&lastAdd.k===ka)lastAdd.k=kb;
   const r=recent.find(x=>x.k===ka);if(r){r.k=kb;r.setName=b.set_name;r.price=nb.price}
   save();updateStats();renderRecent();
@@ -580,7 +650,7 @@ async function readFrame(raw,mode,psm){
   return {read,m};
 }
 // steps = [[getPicture, treatment, layout], ...] tried in order until one gives a confident match
-const grabLine=()=>grabRegion(0.03,0.025,0.94,0.09,900);  // just the name line: the fast path
+const grabLine=()=>grabRegion(0.03,0.025,0.86,0.09,720);  // just the name line: the fast path
 const LIVE=[[grabLine,'gray','7'],[grabTop,'gray','6'],[grabTop,'bin','6']];
 async function identify(steps){
   await loadNames().catch(()=>{});
@@ -631,7 +701,7 @@ let autoOn=false,armed=true,tries=0,still=0,prevS=null,refS=null;
 async function autoLoop(){
   await loadNames().catch(()=>{});
   while(autoOn){
-    await sleep(90);
+    await sleep(60);
     if(!autoOn)break;
     if(curTab!=='scan'||busy||cur||document.hidden||!stream)continue;
     const s=sample();if(!s)continue;
@@ -706,6 +776,8 @@ async function pump(){
 async function handleVoice(alts){
   const said=norm(alts[0]);
   if(said==='undo that'||said==='scratch that'){$('undo').click();return}
+  if(curDeck&&(said==='sideboard'||said==='side board')){setBoard(true);return}
+  if(curDeck&&(said==='main deck'||said==='maindeck'||said==='main board')){setBoard(false);return}
   let best=null,heard=alts[0];
   if(triIdx)for(const t of alts){const m=matchName(t);if(m&&(!best||m.sim>best.sim)){best=m;heard=t}}
   let c=null;
@@ -744,6 +816,108 @@ async function manual(){
 $('btnManual').onclick=manual;
 $('manual').addEventListener('keydown',e=>{if(e.key==='Enter')manual()});
 
+/* ---------- decks ---------- */
+// deck: {id,name,colors:['W','U'],pw:'planeswalker name',pwId:'scryfall id of that card'}
+// library entries carry deck ('' = no deck) and sb (true = sideboard)
+const DKEY='mtg-decks-v1';
+let decks=[],curDeck='',curSb=false;
+try{decks=JSON.parse(localStorage.getItem(DKEY)||'[]')||[];curDeck=localStorage.getItem('mtg-curdeck')||'';curSb=localStorage.getItem('mtg-cursb')==='1'}catch(e){}
+if(!decks.find(d=>d.id===curDeck)){curDeck='';curSb=false}
+function saveDecks(){try{localStorage.setItem(DKEY,JSON.stringify(decks));localStorage.setItem('mtg-curdeck',curDeck);localStorage.setItem('mtg-cursb',curSb?'1':'0')}catch(e){}}
+const deckById=id=>decks.find(d=>d.id===id)||null;
+const keyOf=(id,foil,deck,sb)=>id+(foil?'f':'n')+(deck?'|'+deck+'|'+(sb?'s':'m'):'');
+const whereOf=i=>{const d=deckById(i.deck);return d?d.name+(i.sb?' (sideboard)':''):''};
+const MANA={W:'#f3ecc6',U:'#2f7fd6',B:'#5a4d63',R:'#d8432f',G:'#2f9a5c'};
+const MNAME={W:'White',U:'Blue',B:'Black',R:'Red',G:'Green'};
+const COMBO={WU:'Azorius',UB:'Dimir',BR:'Rakdos',RG:'Gruul',WG:'Selesnya',WB:'Orzhov',UR:'Izzet',BG:'Golgari',WR:'Boros',UG:'Simic',
+  WUB:'Esper',UBR:'Grixis',BRG:'Jund',WRG:'Naya',WUG:'Bant',WBG:'Abzan',WUR:'Jeskai',UBG:'Sultai',WBR:'Mardu',URG:'Temur'};
+const colStr=cols=>'WUBRG'.split('').filter(c=>(cols||[]).indexOf(c)>=0).join('');
+function comboName(cols){
+  const s=colStr(cols);if(!s)return 'Colorless';
+  if(s.length===1)return 'Mono-'+MNAME[s];
+  return COMBO[s]||(s.length===5?'Five-color':s.length===4?'Four-color':s);
+}
+// round badge: a ring in the deck's colors around the planeswalker's art (or an initial)
+function deckIcon(d,size){
+  size=size||22;const pad=Math.max(2,Math.round(size*0.13)),fs=Math.round(size*0.42);
+  if(!d)return `<span class="dk" style="width:${size}px;height:${size}px;padding:${pad}px;background:#3a4150"><b style="font-size:${fs}px">–</b></span>`;
+  const s=colStr(d.colors).split('').filter(Boolean),cs=s.length?s.map(c=>MANA[c]):['#9aa3b2'];
+  const stops=cs.map((c,i)=>c+' '+(i*360/cs.length)+'deg '+((i+1)*360/cs.length)+'deg').join(',');
+  const inner=d.pwId?`<img src="https://cards.scryfall.io/art_crop/front/${d.pwId[0]}/${d.pwId[1]}/${d.pwId}.jpg" alt="">`:`<b style="font-size:${fs}px">${esc((d.pw||d.name||'?').charAt(0).toUpperCase())}</b>`;
+  return `<span class="dk" style="width:${size}px;height:${size}px;padding:${pad}px;background:conic-gradient(${stops})">${inner}</span>`;
+}
+// move a whole library entry to another deck / board, merging with a matching entry there
+function moveEntry(it,deck,sb){
+  sb=!!sb&&!!deck;
+  const k=keyOf(it.id,it.foil,deck,sb);if(k===it.k)return;
+  const o=lib.find(x=>x.k===k);
+  if(o){o.qty+=it.qty;lib=lib.filter(x=>x!==it)}else{it.k=k;it.deck=deck;it.sb=sb}
+}
+function deckOptions(sel,first,keep){
+  sel.innerHTML=first+decks.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('');
+  sel.value=keep;if(sel.value!==keep)sel.selectedIndex=0;
+}
+function renderDeckBar(){
+  const s=$('deckSel');
+  deckOptions(s,'<option value="">No deck</option>',curDeck);
+  s.insertAdjacentHTML('beforeend','<option value="__new">+ New deck…</option>');
+  const d=deckById(curDeck);
+  $('deckIco').innerHTML=deckIcon(d,32);
+  $('sbBtn').classList.toggle('hide',!d);$('deckEdit').classList.toggle('hide',!d);
+  $('sbBtn').textContent=curSb?'Sideboard':'Main deck';$('sbBtn').classList.toggle('pri',curSb);
+}
+function setBoard(sb){
+  if(!curDeck)return;
+  curSb=sb;saveDecks();renderDeckBar();
+  setMsg('Now scanning into the '+(curSb?'sideboard':'main deck')+' of '+deckById(curDeck).name+'.');
+}
+let editId=null,dfCols=new Set(),delArm=false;
+function paintDfColors(){
+  $('dfColors').innerHTML='WUBRG'.split('').map(c=>`<button class="chip${dfCols.has(c)?' on':''}" data-c="${c}"><i class="dot" style="background:${MANA[c]}"></i>${MNAME[c]}</button>`).join('');
+}
+function openDeckForm(d){
+  editId=d?d.id:null;dfCols=new Set(d?d.colors:[]);delArm=false;
+  $('dfTitle').textContent=d?'Edit deck':'New deck';$('dfPw').value=d?d.pw||'':'';$('dfName').value=d?d.name:'';
+  $('dfDelete').classList.toggle('hide',!d);$('dfDelete').textContent='Delete';$('dfMsg').textContent='';
+  paintDfColors();$('deckForm').classList.remove('hide');
+}
+$('dfColors').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;const c=b.dataset.c;dfCols.has(c)?dfCols.delete(c):dfCols.add(c);paintDfColors()};
+$('deckSel').onchange=e=>{
+  const v=e.target.value;
+  if(v==='__new'){e.target.value=curDeck;openDeckForm(null);return}
+  curDeck=v;curSb=false;saveDecks();renderDeckBar();
+  setMsg(v?'Scanning into '+deckById(v).name+' (main deck).':'Scanning with no deck.');
+};
+$('sbBtn').onclick=()=>setBoard(!curSb);
+$('deckEdit').onclick=()=>{const d=deckById(curDeck);if(d)openDeckForm(d)};
+$('dfCancel').onclick=()=>$('deckForm').classList.add('hide');
+$('dfSave').onclick=async()=>{
+  const cols='WUBRG'.split('').filter(c=>dfCols.has(c));
+  let pw=$('dfPw').value.trim(),pwId='',name=$('dfName').value.trim();
+  $('dfSave').disabled=true;
+  try{
+    if(pw){ // snap the planeswalker to the real card so its art can be used for the badge
+      $('dfMsg').textContent='Looking up '+pw+'…';
+      let c=null;
+      try{await loadNames().catch(()=>{});const m=triIdx?matchName(pw):null;c=await cardFor(m&&m.ok?m.name:pw)}catch(e){}
+      if(c){pw=c.name.split(' // ')[0];pwId=c.id}
+    }
+    if(!name)name=pw?pw.split(',')[0]+' · '+comboName(cols):comboName(cols);
+    const base=name;let i=2;while(decks.some(d=>d.name===name&&d.id!==editId))name=base+' '+(i++);
+    if(editId)Object.assign(deckById(editId),{name,colors:cols,pw,pwId});
+    else{const id='d'+Date.now().toString(36);decks.push({id,name,colors:cols,pw,pwId});curDeck=id;curSb=false}
+    saveDecks();renderDeckBar();$('deckForm').classList.add('hide');
+    setMsg('Scanning into '+deckById(curDeck||editId).name+'.');
+  }finally{$('dfSave').disabled=false}
+};
+$('dfDelete').onclick=()=>{
+  if(!delArm){delArm=true;$('dfDelete').textContent='Tap again to delete';$('dfMsg').textContent='The cards stay in your library and move to "No deck".';return}
+  const id=editId;
+  lib.slice().forEach(it=>{if(it.deck===id)moveEntry(it,'',false)});
+  decks=decks.filter(d=>d.id!==id);if(curDeck===id){curDeck='';curSb=false}
+  save();saveDecks();renderDeckBar();updateStats();$('deckForm').classList.add('hide');setMsg('Deck deleted.');
+};
+
 /* ---------- library ---------- */
 function updateStats(){
   let v=0,n=0;lib.forEach(i=>{n+=i.qty;v+=(i.price||0)*i.qty});
@@ -764,7 +938,7 @@ $('colors').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;const c=b
 $('fClear').onclick=()=>{
   F.colors.clear();F.foil=F.dup=F.noPrice=false;
   document.querySelectorAll('#viewLib .chip.on').forEach(b=>b.classList.remove('on'));
-  $('filter').value='';$('fSet').value='';$('fType').value='';$('fRar').value='';$('fMin').value='';renderLib();
+  $('filter').value='';$('fSet').value='';$('fType').value='';$('fRar').value='';$('fMin').value='';$('fDeck').value='';$('fBoard').value='';renderLib();
 };
 function buildFilterOptions(){
   const keep=$('fSet').value,keepT=$('fType').value;
@@ -774,13 +948,16 @@ function buildFilterOptions(){
   $('fSet').value=sets.has(keep)?keep:'';
   $('fType').innerHTML='<option value="">All types</option>'+TYPES.concat('Other').map(t=>`<option>${t}</option>`).join('');
   $('fType').value=keepT;
+  deckOptions($('fDeck'),'<option value="">All decks</option><option value="__none">No deck</option>',$('fDeck').value);
+  deckOptions($('mvDeck'),'<option value="">No deck</option>',$('mvDeck').value);
 }
 function filtered(){
-  const f=$('filter').value.trim().toLowerCase(),fs=$('fSet').value,ft=$('fType').value,fr=$('fRar').value,min=parseFloat($('fMin').value)||0;
+  const f=$('filter').value.trim().toLowerCase(),fs=$('fSet').value,ft=$('fType').value,fr=$('fRar').value,min=parseFloat($('fMin').value)||0,fd=$('fDeck').value,fb=$('fBoard').value;
   return lib.filter(i=>
     (!f||i.name.toLowerCase().includes(f)||(i.setName||'').toLowerCase().includes(f)||i.set===f)&&
     (!fs||i.set===fs)&&(!ft||i.type===ft)&&(!fr||rarKey(i)===fr)&&
     (!min||(i.price||0)>=min)&&
+    (!fd||(fd==='__none'?!deckById(i.deck):i.deck===fd))&&(!fb||(fb==='s'?!!i.sb:!i.sb))&&
     (!F.colors.size||F.colors.has(colorKey(i))||(i.col||[]).some(c=>F.colors.has(c)))&&
     (!F.foil||i.foil)&&(!F.dup||i.qty>1)&&(!F.noPrice||i.price==null));
 }
@@ -791,7 +968,8 @@ function itemHtml(i){
     <img loading="lazy" src="${thumb(i.id)}" alt="">
     <div class="m"><div class="n">${esc(i.name)} ${i.foil?'<span class="foil">FOIL</span>':''}</div>
       <div class="s">${esc(i.setName)} #${esc(i.cn)} · ${esc(cap(rarKey(i)))} · ${esc(i.type||'')}</div>
-      <div class="qty" style="margin-top:4px"><button data-a="m">−</button><b>${i.qty}</b><button data-a="p">+</button><button data-a="d" style="width:auto;padding:0 8px;font-size:12px;color:var(--bad)">Remove</button></div></div>
+      ${deckById(i.deck)?`<div class="s">${deckIcon(deckById(i.deck),16)} ${esc(whereOf(i))}</div>`:''}
+      <div class="qty" style="margin-top:4px"><button data-a="m">−</button><b>${i.qty}</b><button data-a="p">+</button><button data-a="mv" style="width:auto;padding:0 8px;font-size:12px">Move</button><button data-a="d" style="width:auto;padding:0 8px;font-size:12px;color:var(--bad)">Remove</button></div></div>
     <div class="p"><b>${i.price!=null?money(i.price*i.qty):'—'}</b><small>${i.price!=null?money(i.price)+' ea':'no price'}</small></div>
   </div>`;
 }
@@ -807,18 +985,22 @@ function renderLib(){
   }
   const groups=new Map();
   a.forEach(i=>{
-    let key,label,ord;
-    if(g==='set'){key=i.set;label=i.setName+(i.yr?' ('+i.yr+')':'');ord=label}
+    let key,label,ord,icon='';
+    if(g==='deck'){
+      const d=deckById(i.deck),di=d?decks.indexOf(d):9999;
+      key=d?d.id+(i.sb?'|s':'|m'):'';label=d?d.name+(i.sb?' — Sideboard':' — Main'):'No deck';ord=di*2+(i.sb?1:0);icon=deckIcon(d,24)+' ';
+    }
+    else if(g==='set'){key=i.set;label=i.setName+(i.yr?' ('+i.yr+')':'');ord=label}
     else if(g==='color'){key=colorKey(i);label=CNAME[key];ord='WUBRGMC'.indexOf(key)}
     else if(g==='type'){key=i.type||'Other';label=key;ord=(TYPES.indexOf(key)+1)||99}
     else{key=rarKey(i);label=cap(key);ord=RORDER[key]}
-    if(!groups.has(key))groups.set(key,{key,label,ord,items:[],n:0,v:0});
+    if(!groups.has(key))groups.set(key,{key,label,ord,icon,items:[],n:0,v:0});
     const G=groups.get(key);G.items.push(i);G.n+=i.qty;G.v+=(i.price||0)*i.qty;
   });
   const gs=[...groups.values()].sort((x,y)=>g==='set'?y.v-x.v||String(x.ord).localeCompare(String(y.ord)):x.ord-y.ord);
   $('list').innerHTML=gs.map(G=>{
     const id=g+':'+G.key,isOpen=open.has(id);
-    return `<div class="grp" data-g="${esc(id)}"><b>${isOpen?'▾':'▸'} ${esc(G.label)}</b><span>${G.n.toLocaleString()} cards · <strong>${money(G.v)}</strong></span></div>`+
+    return `<div class="grp" data-g="${esc(id)}"><b>${isOpen?'▾':'▸'} ${G.icon}${esc(G.label)}</b><span>${G.n.toLocaleString()} cards · <strong>${money(G.v)}</strong></span></div>`+
       (isOpen?G.items.slice(0,200).map(itemHtml).join('')+(G.items.length>200?'<div class="msg">First 200 of '+G.items.length+' shown.</div>':''):'');
   }).join('');
 }
@@ -830,11 +1012,23 @@ $('list').addEventListener('click',e=>{
   if(b.dataset.a==='p')it.qty++;
   else if(b.dataset.a==='m')it.qty=Math.max(1,it.qty-1);
   else if(b.dataset.a==='d')lib=lib.filter(x=>x!==it);
+  else if(b.dataset.a==='mv')moveEntry(it,$('mvDeck').value,$('mvBoard').value==='s');
   save();updateStats();if(b.dataset.a==='d')buildFilterOptions();renderLib();
 });
+// "All shown" moves every card matching the current filters into the chosen deck (two taps, to avoid accidents)
+let mvArm=0;
+$('mvAll').onclick=()=>{
+  const a=filtered();if(!a.length)return;
+  if(Date.now()-mvArm>4000){mvArm=Date.now();$('mvAll').textContent='Tap again: '+a.length;setTimeout(()=>{$('mvAll').textContent='All shown'},4000);return}
+  mvArm=0;$('mvAll').textContent='All shown';
+  const deck=$('mvDeck').value,sb=$('mvBoard').value==='s';
+  a.forEach(it=>moveEntry(it,deck,sb));
+  save();updateStats();renderLib();
+  setLib('Moved '+a.length+' entries to '+(deckById(deck)?deckById(deck).name+(sb?' (sideboard)':''):'No deck')+'.','good');
+};
 let ft=null;
 ['filter','fMin'].forEach(id=>$(id).oninput=()=>{clearTimeout(ft);ft=setTimeout(renderLib,150)});
-['sort','group','fSet','fType','fRar'].forEach(id=>$(id).onchange=renderLib);
+['sort','group','fSet','fType','fRar','fDeck','fBoard'].forEach(id=>$(id).onchange=renderLib);
 
 $('btnRefresh').onclick=async()=>{
   if(!lib.length)return;
@@ -857,8 +1051,9 @@ function dl(name,text,type){
 }
 $('btnCsv').onclick=()=>{
   const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
-  const rows=[['Name','Set Code','Set Name','Year','Collector #','Rarity','Colors','Type','Mana Value','Foil','Qty','Unit Price USD','Total USD','Scryfall ID']];
-  lib.forEach(i=>rows.push([i.name,i.set,i.setName,i.yr,i.cn,i.rar,(i.col||[]).join(''),i.type,i.cmc,i.foil?'Yes':'No',i.qty,i.price!=null?i.price.toFixed(2):'',i.price!=null?(i.price*i.qty).toFixed(2):'',i.id]));
+  const board=i=>deckById(i.deck)?(i.sb?'Sideboard':'Main'):'';
+  const rows=[['Name','Deck','Board','Set Code','Set Name','Year','Collector #','Rarity','Colors','Type','Mana Value','Foil','Qty','Unit Price USD','Total USD','Scryfall ID']];
+  lib.forEach(i=>rows.push([i.name,deckById(i.deck)?deckById(i.deck).name:'',board(i),i.set,i.setName,i.yr,i.cn,i.rar,(i.col||[]).join(''),i.type,i.cmc,i.foil?'Yes':'No',i.qty,i.price!=null?i.price.toFixed(2):'',i.price!=null?(i.price*i.qty).toFixed(2):'',i.id]));
   dl('mtg-library.csv',rows.map(r=>r.map(q).join(',')).join('\n'),'text/csv');
 };
 function loadXLSX(){
@@ -870,13 +1065,14 @@ $('btnXlsx').onclick=async()=>{
   setLib('Building Excel file…');
   try{await loadXLSX()}catch(e){setLib('Could not load the Excel builder (no connection?). Export CSV works offline and opens in Excel too.','bad');return}
   try{
-    const head=['Name','Set','Set Code','Year','Collector #','Rarity','Color','Card Type','Mana Value','Foil','Qty','Unit Price','Total Value','Date Added','Scryfall ID'];
+    const dn=i=>deckById(i.deck)?deckById(i.deck).name:'',bd=i=>deckById(i.deck)?(i.sb?'Sideboard':'Main'):'';
+    const head=['Name','Deck','Board','Set','Set Code','Year','Collector #','Rarity','Color','Card Type','Mana Value','Foil','Qty','Unit Price','Total Value','Date Added','Scryfall ID'];
     const day=t=>t?new Date(t).toISOString().slice(0,10):'';
-    const rows=lib.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(i=>[i.name,i.setName,(i.set||'').toUpperCase(),i.yr?+i.yr:'',i.cn,cap(rarKey(i)),CNAME[colorKey(i)],i.type||'',i.cmc||0,i.foil?'Yes':'No',i.qty,i.price!=null?i.price:'',i.price!=null?+(i.price*i.qty).toFixed(2):'',day(i.added),i.id]);
+    const rows=lib.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(i=>[i.name,dn(i),bd(i),i.setName,(i.set||'').toUpperCase(),i.yr?+i.yr:'',i.cn,cap(rarKey(i)),CNAME[colorKey(i)],i.type||'',i.cmc||0,i.foil?'Yes':'No',i.qty,i.price!=null?i.price:'',i.price!=null?+(i.price*i.qty).toFixed(2):'',day(i.added),i.id]);
     const ws=XLSX.utils.aoa_to_sheet([head].concat(rows));
     ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:rows.length,c:head.length-1}})};
-    ws['!cols']=[34,30,9,7,11,11,12,14,11,6,6,11,12,12,38].map(w=>({wch:w}));
-    for(let r=1;r<=rows.length;r++)for(const c of [11,12]){const cell=ws[XLSX.utils.encode_cell({r,c})];if(cell&&cell.t==='n')cell.z='$#,##0.00'}
+    ws['!cols']=[34,24,11,30,9,7,11,11,12,14,11,6,6,11,12,12,38].map(w=>({wch:w}));
+    for(let r=1;r<=rows.length;r++)for(const c of [13,14]){const cell=ws[XLSX.utils.encode_cell({r,c})];if(cell&&cell.t==='n')cell.z='$#,##0.00'}
     const sets=new Map();
     lib.forEach(i=>{const k=i.set;if(!sets.has(k))sets.set(k,[i.setName,(i.set||'').toUpperCase(),i.yr?+i.yr:'',0,0,0]);const g=sets.get(k);g[3]+=i.qty;g[4]++;g[5]+=(i.price||0)*i.qty});
     const srows=[...sets.values()].sort((a,b)=>b[5]-a[5]).map(g=>{g[5]=+g[5].toFixed(2);return g});
@@ -884,22 +1080,30 @@ $('btnXlsx').onclick=async()=>{
     ws2['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:srows.length,c:5}})};
     ws2['!cols']=[34,9,7,8,8,12].map(w=>({wch:w}));
     for(let r=1;r<=srows.length;r++){const cell=ws2[XLSX.utils.encode_cell({r,c:5})];if(cell)cell.z='$#,##0.00'}
+    const dk=new Map();
+    lib.forEach(i=>{const k=dn(i)+'|'+bd(i);if(!dk.has(k))dk.set(k,[dn(i)||'(No deck)',bd(i),0,0,0]);const g=dk.get(k);g[2]+=i.qty;g[3]++;g[4]+=(i.price||0)*i.qty});
+    const drows=[...dk.values()].sort((a,b)=>a[0].localeCompare(b[0])||a[1].localeCompare(b[1])).map(g=>{g[4]=+g[4].toFixed(2);return g});
+    const ws3=XLSX.utils.aoa_to_sheet([['Deck','Board','Cards','Unique','Total Value']].concat(drows));
+    ws3['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:drows.length,c:4}})};
+    ws3['!cols']=[28,11,8,8,12].map(w=>({wch:w}));
+    for(let r=1;r<=drows.length;r++){const cell=ws3[XLSX.utils.encode_cell({r,c:4})];if(cell)cell.z='$#,##0.00'}
     const wb=XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb,ws,'Library');XLSX.utils.book_append_sheet(wb,ws2,'By Set');
+    XLSX.utils.book_append_sheet(wb,ws,'Library');XLSX.utils.book_append_sheet(wb,ws3,'By Deck');XLSX.utils.book_append_sheet(wb,ws2,'By Set');
     XLSX.writeFile(wb,'mtg-library-'+day(Date.now())+'.xlsx');
     setLib('Excel file saved to your downloads.','good');
   }catch(e){setLib('Excel export failed ('+(e.message||e)+'). Use Export CSV instead.','bad')}
 };
-$('btnBackup').onclick=()=>dl('mtg-library-backup.json',JSON.stringify(lib),'application/json');
+$('btnBackup').onclick=()=>dl('mtg-library-backup.json',JSON.stringify({v:2,lib,decks}),'application/json');
 $('restore').onchange=async e=>{
   const f=e.target.files[0];e.target.value='';if(!f)return;
-  try{const d=JSON.parse(await f.text());if(!Array.isArray(d))throw 0;
+  try{const raw=JSON.parse(await f.text()),d=Array.isArray(raw)?raw:raw&&raw.lib;if(!Array.isArray(d))throw 0;
+    if(raw&&Array.isArray(raw.decks)){raw.decks.forEach(x=>{if(x&&x.id&&x.name&&!deckById(x.id))decks.push(x)});saveDecks();renderDeckBar()}
     let n=0;d.forEach(x=>{if(!x||!x.k||!x.id||!x.name)return;n++;const o=lib.find(y=>y.k===x.k);if(o)o.qty=Math.max(o.qty,x.qty||1);else lib.push(x)});
     save();updateStats();buildFilterOptions();renderLib();setLib('Restored '+n+' entries.','good');
   }catch(_){setLib('That file is not a valid backup.','bad')}
 };
 
-updateStats();startCam();loadNames().catch(()=>{});getWorker().catch(()=>{}); // warm up so the first scan isn't slow
+renderDeckBar();updateStats();startCam();loadNames().catch(()=>{});getWorker().catch(()=>{}); // warm up so the first scan isn't slow
 })();
 </script>
 </body>
