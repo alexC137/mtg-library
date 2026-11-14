@@ -10,9 +10,10 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
 header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);padding:5px 10px;padding-top:calc(5px + env(safe-area-inset-top));display:flex;align-items:center;gap:6px}
-.stats{display:flex;gap:9px;align-items:baseline;flex:1;min-width:0;white-space:nowrap;overflow:hidden}
-.stats b{font-size:15px;color:var(--acc)}.stats span{color:var(--mute);font-size:11px}
-nav{display:flex;gap:6px}
+.stats{display:flex;gap:12px;align-items:center;flex:1;min-width:0;white-space:nowrap}
+.stats div{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.stats b{font-size:15px;color:var(--acc)}.stats span{color:var(--mute);font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+nav{display:flex;gap:6px;flex:none}
 nav button{padding:7px 10px;border:1px solid var(--line);background:transparent;color:var(--text);border-radius:9px;font-size:14px}
 nav button.on{background:var(--acc);color:#000;border-color:var(--acc);font-weight:600}
 main{padding:8px 12px;max-width:760px;margin:0 auto}
@@ -41,6 +42,7 @@ input[type=text],input[type=search],input[type=number],select{width:100%;padding
 .grid2{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
 .item{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 .item img{width:44px;height:61px;border-radius:4px;background:#000;object-fit:cover}
+.item{cursor:pointer}
 .item .m{flex:1;min-width:0}
 .item .n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item .s{color:var(--mute);font-size:12px}
@@ -81,7 +83,6 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
     <button id="tabScan" class="on">Scan</button>
     <button id="tabLib">Library</button>
   </nav>
-  <button id="helpBtn" title="How to use" style="flex:none;width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:transparent;color:var(--mute);font-size:14px;font-weight:700;padding:0">?</button>
 </header>
 
 <main>
@@ -118,9 +119,10 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
   </div>
   <div id="result"></div>
   <div id="recent"></div>
-  <div class="row" style="margin-top:10px;gap:16px">
+  <div class="row" style="margin-top:10px;gap:12px">
     <label class="chk"><input type="checkbox" id="auto"> Auto-scan</label>
     <label class="chk"><input type="checkbox" id="autoAdd"> Add automatically</label>
+    <button class="btn sm helpOpen" style="margin-left:auto;white-space:nowrap">? How to use</button>
   </div>
   <div class="row" id="camctl" style="margin-top:8px">
     <span style="color:var(--mute);font-size:13px">Zoom</span>
@@ -176,6 +178,7 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
   </div>
   <div id="list"></div>
   <div class="tools">
+    <button class="btn sm helpOpen">? How to use</button>
     <button id="btnRefresh" class="btn sm">Refresh prices</button>
     <button id="btnXlsx" class="btn sm pri">Export to Excel</button>
     <button id="btnCsv" class="btn sm">Export CSV</button>
@@ -223,9 +226,35 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
     <h3 style="margin:16px 0 4px;font-size:16px">Your library</h3>
     <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.55">
       <li>Filter, sort, and group your cards, and tap <b>Refresh prices</b> to update values.</li>
+      <li><b>Tap any card</b> to see it full size and fix its printing, foil, quantity, or deck.</li>
       <li><b>Export to Excel</b> (or CSV) saves the whole collection to a spreadsheet.</li>
       <li>Your library lives only in this phone's browser. Tap <b>Backup</b> now and then, and don't clear the browser's site data or you'll lose it. Use <b>Restore</b> to bring a backup back.</li>
     </ul>
+  </div>
+</div>
+<div id="cd" class="hide" style="position:fixed;inset:0;z-index:19;background:rgba(0,0,0,.75);overflow:auto;padding:12px;padding-top:calc(12px + env(safe-area-inset-top))">
+  <div style="max-width:520px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 12px calc(14px + env(safe-area-inset-bottom))">
+    <div class="row" style="margin-bottom:8px">
+      <div style="flex:1;min-width:0"><div id="cdName" style="font-weight:700;font-size:18px"></div><div id="cdPrice" style="color:var(--ok);font-weight:700"></div></div>
+      <button id="cdClose" class="btn">Close</button>
+    </div>
+    <img id="cdImg" alt="" style="width:100%;border-radius:12px;background:#000;display:block;aspect-ratio:488/680">
+    <button id="cdFlip" class="btn sm hide" style="margin-top:6px">Flip card</button>
+    <label style="display:block;color:var(--mute);font-size:12px;margin-top:10px">Printing</label>
+    <select id="cdPrint"></select>
+    <div class="grid2">
+      <label class="chk"><input type="checkbox" id="cdFoil"> Foil</label>
+      <div class="qty"><button id="cdQm">−</button><b id="cdQn">1</b><button id="cdQp">+</button></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div style="flex:2"><label style="display:block;color:var(--mute);font-size:12px">Deck</label><select id="cdDeck"></select></div>
+      <div style="flex:1"><label style="display:block;color:var(--mute);font-size:12px">Board</label><select id="cdBoard"><option value="m">Main</option><option value="s">Sideboard</option></select></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="cdSave" class="btn ok" style="flex:2">Save changes</button>
+      <button id="cdDel" class="btn" style="flex:1;color:var(--bad)">Remove</button>
+    </div>
+    <div id="cdMsg" style="color:var(--mute);font-size:13px;margin-top:6px"></div>
   </div>
 </div>
 <div id="toast" class="hide"><div id="toastText"></div><button class="btn sm" id="undo">Undo</button></div>
@@ -259,7 +288,8 @@ function tab(which){
 }
 $('tabScan').onclick=()=>tab('scan');
 $('tabLib').onclick=()=>tab('lib');
-$('helpBtn').onclick=()=>{$('help').classList.remove('hide');stopCam();stopVoice()};
+function openHelp(){$('help').classList.remove('hide');stopCam();stopVoice()}
+document.querySelectorAll('.helpOpen').forEach(b=>b.onclick=openHelp);
 $('helpClose').onclick=()=>{$('help').classList.add('hide');if(curTab==='scan')startCam()};
 
 /* ---------- camera ---------- */
@@ -1015,7 +1045,7 @@ function itemHtml(i){
     <div class="m"><div class="n">${esc(i.name)} ${i.foil?'<span class="foil">FOIL</span>':''}</div>
       <div class="s">${esc(i.setName)} #${esc(i.cn)} · ${esc(cap(rarKey(i)))} · ${esc(i.type||'')}</div>
       ${deckById(i.deck)?`<div class="s">${deckIcon(deckById(i.deck),16)} ${esc(whereOf(i))}</div>`:''}
-      <div class="qty" style="margin-top:4px"><button data-a="m">−</button><b>${i.qty}</b><button data-a="p">+</button><button data-a="mv" style="width:auto;padding:0 8px;font-size:12px">Move</button><button data-a="d" style="width:auto;padding:0 8px;font-size:12px;color:var(--bad)">Remove</button></div></div>
+      <div class="qty" style="margin-top:4px"><button data-a="m">−</button><b>${i.qty}</b><button data-a="p">+</button><button data-a="d" style="width:auto;padding:0 8px;font-size:12px;color:var(--bad)">Remove</button></div></div>
     <div class="p"><b>${i.price!=null?money(i.price*i.qty):'—'}</b><small>${i.price!=null?money(i.price)+' ea':'no price'}</small></div>
   </div>`;
 }
@@ -1053,7 +1083,8 @@ function renderLib(){
 $('list').addEventListener('click',e=>{
   const gr=e.target.closest('.grp');
   if(gr){const id=gr.dataset.g;open.has(id)?open.delete(id):open.add(id);renderLib();return}
-  const b=e.target.closest('button');if(!b)return;
+  const b=e.target.closest('button');
+  if(!b){const r=e.target.closest('.item');if(r){const x=lib.find(y=>y.k===r.dataset.k);if(x)openCard(x)}return}
   const row=b.closest('.item'),it=lib.find(x=>x.k===row.dataset.k);if(!it)return;
   if(b.dataset.a==='p')it.qty++;
   else if(b.dataset.a==='m')it.qty=Math.max(1,it.qty-1);
@@ -1061,6 +1092,74 @@ $('list').addEventListener('click',e=>{
   else if(b.dataset.a==='mv')moveEntry(it,$('mvDeck').value,$('mvBoard').value==='s');
   save();updateStats();if(b.dataset.a==='d')buildFilterOptions();renderLib();
 });
+
+/* ---------- card view (tap a card in the library) ---------- */
+const bigImg=(id,back)=>'https://cards.scryfall.io/large/'+(back?'back':'front')+'/'+id[0]+'/'+id[1]+'/'+id+'.jpg';
+let cdIt=null,cdCard=null,cdPrints=[],cdQty=1,cdBack=false,cdDelArm=false,cdReq=0;
+function cdShowPrice(){
+  const c=cdPrints.find(p=>p.id===$('cdPrint').value)||cdCard,f=$('cdFoil').checked;
+  const p=c?priceOf(c,f):(f===cdIt.foil?cdIt.price:null);
+  $('cdPrice').textContent=p!=null?money(p)+' each'+(cdQty>1?' · '+money(p*cdQty)+' total':''):'No price';
+}
+function cdShowImg(){
+  const id=$('cdPrint').value||cdIt.id,c=cdPrints.find(p=>p.id===id)||cdCard;
+  const dfc=!!(c&&c.card_faces&&!c.image_uris);
+  $('cdFlip').classList.toggle('hide',!dfc);if(!dfc)cdBack=false;
+  $('cdImg').src=bigImg(id,cdBack);
+}
+async function openCard(it){
+  cdIt=it;cdCard=null;cdPrints=[];cdQty=it.qty;cdBack=false;cdDelArm=false;const req=++cdReq;
+  $('cdName').textContent=it.name;$('cdQn').textContent=cdQty;$('cdFoil').checked=!!it.foil;
+  $('cdPrint').innerHTML=`<option value="${it.id}">${esc(it.yr||'')} · ${esc(it.setName)} #${esc(it.cn)}</option>`;
+  deckOptions($('cdDeck'),'<option value="">No deck</option>',it.deck||'');
+  $('cdBoard').value=it.sb?'s':'m';
+  $('cdDel').textContent='Remove';$('cdMsg').textContent='Loading printings…';
+  cdShowImg();cdShowPrice();
+  $('cd').classList.remove('hide');
+  try{
+    const c=await sj(API+'/cards/'+it.id);if(req!==cdReq)return;
+    cdCard=c;cdShowImg();cdShowPrice();
+    let all=[],url=c&&c.prints_search_uri;
+    while(url&&all.length<400){const d=await sj(url);if(req!==cdReq)return;if(!d)break;all=all.concat(d.data||[]);url=d.has_more?d.next_page:null;if(url)await sleep(100)}
+    if(!all.find(p=>p.id===it.id)&&c)all.unshift(c);
+    cdPrints=all;
+    $('cdPrint').innerHTML=all.map(p=>{const pr=priceOf(p,false);return `<option value="${p.id}">${esc((p.released_at||'').slice(0,4))} · ${esc(p.set_name)} #${esc(p.collector_number)} · ${pr!=null?money(pr):'—'}</option>`}).join('');
+    $('cdPrint').value=it.id;
+    $('cdMsg').textContent=all.length>1?all.length+' printings. Pick the one that matches your card (check the set symbol and collector number at the bottom).':'';
+    cdShowPrice();
+  }catch(e){if(req===cdReq)$('cdMsg').textContent='Could not load other printings (no connection?). You can still change the deck, foil and quantity.'}
+}
+function closeCard(){$('cd').classList.add('hide');cdIt=null;cdReq++}
+$('cdClose').onclick=closeCard;
+$('cd').onclick=e=>{if(e.target.id==='cd')closeCard()};
+$('cdImg').onclick=()=>{if(!$('cdFlip').classList.contains('hide')){cdBack=!cdBack;cdShowImg()}};
+$('cdFlip').onclick=()=>{cdBack=!cdBack;cdShowImg()};
+$('cdPrint').onchange=()=>{cdBack=false;cdShowImg();cdShowPrice()};
+$('cdFoil').onchange=cdShowPrice;
+$('cdQm').onclick=()=>{cdQty=Math.max(1,cdQty-1);$('cdQn').textContent=cdQty;cdShowPrice()};
+$('cdQp').onclick=()=>{cdQty++;$('cdQn').textContent=cdQty;cdShowPrice()};
+$('cdSave').onclick=()=>{
+  const it=cdIt;if(!it)return;
+  const newId=$('cdPrint').value||it.id,foil=$('cdFoil').checked,deck=$('cdDeck').value,sb=$('cdBoard').value==='s'&&!!deck;
+  const pc=cdPrints.find(p=>p.id===newId)||(cdCard&&cdCard.id===newId?cdCard:null);
+  const k=keyOf(newId,foil,deck,sb);
+  const price=pc?priceOf(pc,foil):(foil===it.foil?it.price:null);
+  lib=lib.filter(x=>x!==it);
+  const o=lib.find(x=>x.k===k);
+  if(o){o.qty+=cdQty;if(pc){o.price=price}}
+  else{
+    const n=Object.assign({},it,{k,id:newId,foil,deck,sb,qty:cdQty,price});
+    if(pc)Object.assign(n,meta(pc));
+    lib.push(n);
+  }
+  save();updateStats();buildFilterOptions();renderLib();closeCard();
+  setLib('Saved '+(pc?pc.name:it.name)+(o?' (merged with a matching entry)':'')+'.','good');
+};
+$('cdDel').onclick=()=>{
+  if(!cdIt)return;
+  if(!cdDelArm){cdDelArm=true;$('cdDel').textContent='Tap again';return}
+  lib=lib.filter(x=>x!==cdIt);save();updateStats();buildFilterOptions();renderLib();closeCard();
+};
 // "All shown" moves every card matching the current filters into the chosen deck (two taps, to avoid accidents)
 let mvArm=0;
 $('mvAll').onclick=()=>{
@@ -1149,7 +1248,9 @@ $('restore').onchange=async e=>{
   }catch(_){setLib('That file is not a valid backup.','bad')}
 };
 
-renderDeckBar();updateStats();startCam();loadNames().catch(()=>{});getWorker().catch(()=>{}); // warm up so the first scan isn't slow
+renderDeckBar();updateStats();
+try{if(!localStorage.getItem('mtg-seen-help')){localStorage.setItem('mtg-seen-help','1');if(!lib.length)openHelp()}}catch(e){}
+if($('help').classList.contains('hide'))startCam();loadNames().catch(()=>{});getWorker().catch(()=>{}); // warm up so the first scan isn't slow
 })();
 </script>
 </body>
