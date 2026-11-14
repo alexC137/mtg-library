@@ -9,13 +9,13 @@
 :root{--bg:#14161b;--panel:#1e222a;--line:#2d333f;--text:#eef0f4;--mute:#9aa3b2;--acc:#f0b429;--ok:#3ecf8e;--bad:#ff6b6b}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
-header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top))}
-.stats{display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
-.stats b{font-size:20px;color:var(--acc)}.stats span{color:var(--mute);font-size:13px}
-nav{display:flex;gap:8px;margin-top:8px}
-nav button{flex:1;padding:10px;border:1px solid var(--line);background:transparent;color:var(--text);border-radius:10px;font-size:15px}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);padding:5px 10px;padding-top:calc(5px + env(safe-area-inset-top));display:flex;align-items:center;gap:8px}
+.stats{display:flex;gap:10px;align-items:baseline;flex:1;min-width:0;white-space:nowrap;overflow:hidden}
+.stats b{font-size:15px;color:var(--acc)}.stats span{color:var(--mute);font-size:11px}
+nav{display:flex;gap:6px}
+nav button{padding:7px 12px;border:1px solid var(--line);background:transparent;color:var(--text);border-radius:9px;font-size:14px}
 nav button.on{background:var(--acc);color:#000;border-color:var(--acc);font-weight:600}
-main{padding:12px 14px;max-width:760px;margin:0 auto}
+main{padding:8px 12px;max-width:760px;margin:0 auto}
 .hide{display:none!important}
 button,select,input{font:inherit}
 .btn{padding:12px 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text)}
@@ -24,19 +24,20 @@ button,select,input{font:inherit}
 .btn.sm{padding:6px 10px;font-size:14px}
 .row{display:flex;gap:8px;align-items:center}
 input[type=text],input[type=search],input[type=number],select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);min-width:0}
-#camwrap{position:relative;width:100%;height:58vh;max-height:560px;background:#000;border-radius:14px;overflow:hidden}
+#camwrap{position:relative;width:100%;height:42vh;max-height:440px;background:#000;border-radius:14px;overflow:hidden}
 #cam{width:100%;height:100%;object-fit:cover}
 #guide{position:absolute;border:2px solid rgba(240,180,41,.9);border-radius:10px;box-shadow:0 0 0 999px rgba(0,0,0,.45);pointer-events:none}
 #guide i{position:absolute;left:0;top:0;width:100%;height:16%;border-bottom:2px dashed #fff}
 #guide em{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-style:normal;font-size:12px;color:#fff}
 #nocam{padding:22px;text-align:center;color:var(--mute)}
 .msg{margin:10px 0;color:var(--mute);font-size:14px;min-height:20px}
+#msg{margin:6px 0;min-height:40px;color:var(--text)}
 .msg.bad{color:var(--bad)}.msg.good{color:var(--ok)}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;margin-top:8px}
 .cardtop{display:flex;gap:12px}
-.cardtop img{width:120px;border-radius:8px;background:#000;align-self:flex-start}
+.cardtop img{width:84px;border-radius:8px;background:#000;align-self:flex-start}
 .cardtop h2{margin:0 0 2px;font-size:19px}
-.price{font-size:26px;font-weight:700;color:var(--ok)}
+.price{font-size:22px;font-weight:700;color:var(--ok)}
 .grid2{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
 .item{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 .item img{width:44px;height:61px;border-radius:4px;background:#000;object-fit:cover}
@@ -68,7 +69,7 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
 <body>
 <header>
   <div class="stats">
-    <div><b id="sValue">$0.00</b> <span>total value</span></div>
+    <div><b id="sValue">$0.00</b> <span>value</span></div>
     <div><b id="sCards" style="color:var(--text)">0</b> <span>cards</span></div>
     <div><b id="sUnique" style="color:var(--text)">0</b> <span>unique</span></div>
   </div>
@@ -85,29 +86,30 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
     <div id="guide"><i></i><em>Card name goes above the dashed line</em></div>
   </div>
   <div id="nocam" class="hide"></div>
-  <div class="row" id="camctl" style="margin-top:8px">
-    <span style="color:var(--mute);font-size:13px">Zoom</span>
-    <input id="zoom" type="range" min="1" max="4" step="0.1" value="2" style="flex:1">
-    <b id="zoomv" style="min-width:38px;text-align:right">2.0×</b>
-    <button id="torch" class="btn sm hide">Light</button>
-    <button id="swap" class="btn sm hide">Camera</button>
-  </div>
-  <div style="color:var(--mute);font-size:12px">Blurry? Hold the phone farther back (8–12 in) and zoom in. Phone cameras can't focus up close.<span id="caminfo"></span></div>
-  <div class="row" style="margin-top:10px">
+  <div id="msg" class="msg"></div>
+  <div class="row">
     <button id="btnSnap" class="btn pri" style="flex:2">Scan card</button>
+    <button id="btnClear" class="btn" style="flex:1">Clear</button>
     <label class="btn" style="flex:1;text-align:center;margin:0">Photo<input id="file" type="file" accept="image/*" capture="environment" hidden></label>
   </div>
-  <div class="row" style="margin-top:8px;gap:16px">
+  <div id="result"></div>
+  <div class="row" style="margin-top:10px;gap:16px">
     <label class="chk"><input type="checkbox" id="auto"> Auto-scan</label>
     <label class="chk"><input type="checkbox" id="autoAdd"> Add automatically</label>
   </div>
+  <div class="row" id="camctl" style="margin-top:8px">
+    <span style="color:var(--mute);font-size:13px">Zoom</span>
+    <input id="zoom" type="range" min="1" max="4" step="0.1" value="1" style="flex:1">
+    <b id="zoomv" style="min-width:38px;text-align:right">1.0×</b>
+    <button id="torch" class="btn sm hide">Light</button>
+    <button id="swap" class="btn sm hide">Camera</button>
+  </div>
+  <div style="color:var(--mute);font-size:12px" id="caminfo"></div>
   <div class="row" style="margin-top:8px">
     <input id="manual" type="search" placeholder="Or type a card name…" enterkeyhint="search">
     <button id="btnManual" class="btn">Find</button>
   </div>
-  <div id="msg" class="msg"></div>
-  <div id="dbgwrap" class="hide"><div style="color:var(--mute);font-size:12px">What the scanner sees:</div><canvas id="dbg" style="width:100%;border:1px solid var(--line);border-radius:6px"></canvas></div>
-  <div id="result"></div>
+  <div id="dbgwrap" class="hide" style="margin-top:10px"><div style="color:var(--mute);font-size:12px">What the scanner sees:</div><canvas id="dbg" style="width:100%;border:1px solid var(--line);border-radius:6px"></canvas></div>
 </section>
 
 <section id="viewLib" class="hide">
@@ -197,7 +199,7 @@ async function startCam(){
       const zs=$('zoom');zs.min=hwZoom?hwZoom.min:1;zs.max=hwZoom?Math.min(hwZoom.max,8):4;
       setZoom(Math.min(+zs.max,Math.max(+zs.min,zoomVal)));
       const st=tr.getSettings();
-      $('caminfo').textContent=' Camera: '+st.width+'×'+st.height+(hwZoom?', camera zoom.':', digital zoom.');
+      $('caminfo').textContent='Camera: '+st.width+'×'+st.height+(hwZoom?', camera zoom.':', digital zoom.');
     }catch(e){}
     listCams();
     wrap.classList.remove('hide');$('nocam').classList.add('hide');layoutGuide();
@@ -222,13 +224,13 @@ function grabRegion(fx,fy,fw,fh,tw){
   const g=guideRect(),sc=Math.max(g.cw/vw,g.ch/vh)*dz; // video is centered, then enlarged about its center by any digital zoom
   return crop(cam,vw/2+(g.x+g.w*fx-g.cw/2)/sc,vh/2+(g.y+g.h*fy-g.ch/2)/sc,g.w*fw/sc,g.h*fh/sc,tw);
 }
-let zoomVal=2,dz=1,hwZoom=null,torchOn=false,camIds=[],camId=null;
-try{zoomVal=Math.min(8,Math.max(1,parseFloat(localStorage.getItem('mtg-zoom'))||2));camId=localStorage.getItem('mtg-cam')||null}catch(e){}
+let zoomVal=1,dz=1,hwZoom=null,torchOn=false,camIds=[],camId=null;
+try{zoomVal=Math.min(8,Math.max(1,parseFloat(localStorage.getItem('mtg-zoom2'))||1));camId=localStorage.getItem('mtg-cam')||null}catch(e){}
 function setZoom(z){
   zoomVal=z;$('zoomv').textContent=z.toFixed(1)+'×';$('zoom').value=z;
   if(hwZoom&&stream){dz=1;cam.style.transform='';stream.getVideoTracks()[0].applyConstraints({advanced:[{zoom:z}]}).catch(()=>{})}
   else{dz=z;cam.style.transform='scale('+z+')'}
-  try{localStorage.setItem('mtg-zoom',z)}catch(e){}
+  try{localStorage.setItem('mtg-zoom2',z)}catch(e){}
 }
 $('zoom').oninput=e=>setZoom(parseFloat(e.target.value));
 setZoom(zoomVal);
@@ -301,7 +303,7 @@ async function ocr(canvas){const w=await getWorker();return (await w.recognize(c
 function candidates(data){
   const lines=data.lines&&data.lines.length?data.lines.map(l=>l.text):(data.text||'').split('\n');
   const out=[];
-  const push=t=>{t=t.trim();if(t.replace(/[^A-Za-z]/g,'').length>=4&&out.indexOf(t)<0)out.push(t)};
+  const push=t=>{t=t.trim();if(t.replace(/[^A-Za-z]/g,'').length>=3&&out.indexOf(t)<0)out.push(t)};
   for(const raw of lines){
     const t=raw.replace(/[^A-Za-z',\- ]/g,' ').replace(/\s+/g,' ').replace(/^[ ',\-]+|[ ',\-]+$/g,'');
     const letters=t.replace(/[^A-Za-z]/g,'').length;
@@ -408,9 +410,61 @@ $('undo').onclick=()=>{
   lastAdd=null;save();updateStats();$('toast').classList.add('hide');setMsg('Removed.','');
 };
 
+/* ---------- card-name matching ---------- */
+// The full list of Magic card names is downloaded once per visit, and whatever the camera reads is
+// matched to the closest real name, so a few wrong letters no longer matter.
+let namesP=null,triIdx=null;const faceName=[],faceFull=[];
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/['’]/g,'').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim();
+function loadNames(){
+  if(namesP)return namesP;
+  namesP=(async()=>{
+    const d=await sj(API+'/catalog/card-names');
+    const idx=new Map();
+    d.data.forEach(full=>full.split(' // ').forEach(f=>{
+      const n=norm(f);if(n.length<3)return;
+      const id=faceName.length;faceName.push(n);faceFull.push(f);
+      const p=' '+n+' ',st=new Set();
+      for(let i=0;i<p.length-2;i++){const t=p.substr(i,3);if(st.has(t))continue;st.add(t);let a=idx.get(t);if(!a){a=[];idx.set(t,a)}a.push(id)}
+    }));
+    triIdx=idx;return true;
+  })().catch(e=>{namesP=null;throw e});
+  return namesP;
+}
+function lev(a,b){
+  const m=a.length,n=b.length;if(!m)return n;if(!n)return m;
+  let prev=new Uint16Array(n+1),row=new Uint16Array(n+1);
+  for(let j=0;j<=n;j++)prev[j]=j;
+  for(let i=1;i<=m;i++){
+    row[0]=i;const ca=a.charCodeAt(i-1);
+    for(let j=1;j<=n;j++){const c=prev[j-1]+(ca===b.charCodeAt(j-1)?0:1),d=prev[j]+1,e=row[j-1]+1;row[j]=c<d?(c<e?c:e):(d<e?d:e)}
+    const t=prev;prev=row;row=t;
+  }
+  return prev[n];
+}
+// closest real card name to a piece of read text: {name, sim 0..1, ok}
+function matchName(text){
+  const q=norm(text);if(q.length<3||!triIdx)return null;
+  const p=' '+q+' ',st=new Set(),cnt=new Map();
+  for(let i=0;i<p.length-2;i++){
+    const t=p.substr(i,3);if(st.has(t))continue;st.add(t);
+    const a=triIdx.get(t);if(a)for(let k=0;k<a.length;k++)cnt.set(a[k],(cnt.get(a[k])||0)+1);
+  }
+  const top=[...cnt].map(e=>[e[0],2*e[1]/(st.size+faceName[e[0]].length)]).sort((x,y)=>y[1]-x[1]).slice(0,30);
+  let best=null;
+  for(const e of top){
+    const n=faceName[e[0]];
+    let s=1-lev(q,n)/Math.max(q.length,n.length);
+    if(q.length>n.length&&q[n.length]===' ')s=Math.max(s,1-lev(q.slice(0,n.length),n)/n.length-0.02); // name followed by junk
+    if(!best||s>best.sim||(s===best.sim&&n.length>best.n.length))best={sim:s,n,name:faceFull[e[0]]};
+  }
+  if(!best)return null;
+  best.ok=best.sim>=(best.n.length<=4?1:best.n.length<=7?0.84:0.72);
+  return best;
+}
+
 /* ---------- scan flow ---------- */
 let busy=false;
-const seen=new Map(); // text read -> card or null, so a repeated misread costs no extra lookups
+const seen=new Map(); // fallback when the name list is unavailable: text read -> card or null
 async function resolve(t){
   const k=t.toLowerCase();if(seen.has(k))return seen.get(k);
   if(seen.size>300)seen.clear();
@@ -429,21 +483,39 @@ async function exactPrint(card){
     return c&&c.name===card.name?c:card;
   }catch(e){return card}
 }
-// Read the name band with up to three image treatments until Scryfall recognises a name.
+// Read one frame: returns {read, m} where m is the best name match (m.card set when resolved online instead)
+async function readFrame(raw,mode){
+  const img=prep(raw,mode);showDbg(img);
+  const cands=candidates(await ocr(img));
+  let m=null,read=cands[0]||'';
+  if(triIdx){
+    for(const t of cands){const x=matchName(t);if(x&&(!m||x.sim>m.sim)){m=x;read=t}}
+  }else{
+    for(const t of cands.slice(0,2)){const c=await resolve(t);if(c){m={name:c.name,sim:1,ok:true,card:c};read=t;break}}
+  }
+  return {read,m};
+}
+// Try up to three image treatments and keep the best match.
 async function identify(getCanvas){
-  let read='';
+  await loadNames().catch(()=>{});
+  let read='',best=null;
   for(const mode of ['gray','bin','inv']){
     const raw=getCanvas();if(!raw)break;
-    const img=prep(raw,mode);showDbg(img);
-    const cands=candidates(await ocr(img)).slice(0,2);
-    if(!read&&cands.length)read=cands[0];
-    for(const t of cands){setMsg('Read "'+t+'" — looking up…');const c=await resolve(t);if(c)return {card:c,read:t}}
+    const r=await readFrame(raw,mode);
+    if(!read)read=r.read;
+    if(r.m&&(!best||r.m.sim>best.sim)){best=r.m;best.read=r.read}
+    if(best&&best.ok&&best.sim>=0.9)break;
   }
-  return {read};
+  if(best&&best.ok){
+    setMsg('Read "'+best.read+'" → '+best.name);
+    const c=best.card||await findByName(best.name);
+    if(c)return {card:c,read:best.read};
+  }
+  return {read:best?best.read:read,near:best?best.name:''};
 }
 function noRead(r){
-  if(r.read){setMsg('Read "'+r.read+'" but no card matches. Check the preview below: the name should be sharp and above the dashed line.','bad');$('manual').value=r.read}
-  else setMsg('No text found. Check the preview below: the name should be sharp and above the dashed line.','bad');
+  if(r.read)setMsg('Read "'+r.read+'" — no confident match'+(r.near?' (closest: '+r.near+')':'')+'. Try again, or check the preview at the bottom.','bad');
+  else setMsg('No text found. Keep the card name above the dashed line and try again.','bad');
 }
 async function scanOnce(){
   if(busy)return;
@@ -452,42 +524,48 @@ async function scanOnce(){
   try{
     setMsg('Reading card…');
     const r=await identify(grabTop);
-    if(r.card){const c=await exactPrint(r.card);setMsg('');await show(c)}else noRead(r);
+    if(r.card){const c=await exactPrint(r.card);await show(c)}else noRead(r);
   }catch(e){setMsg(e.message||String(e),'bad')}
   finally{busy=false}
 }
 $('btnSnap').onclick=scanOnce;
 
-// Auto-scan: keep reading; act once two readings in a row resolve to the same card.
+// Auto-scan: keep reading; act once two readings in a row land on the same card.
 let autoOn=false,lastName='',handled='',miss=0,tick=0;
 async function autoLoop(){
+  await loadNames().catch(()=>{});
   while(autoOn){
-    await sleep(300);
+    await sleep(250);
     if(!autoOn)break;
     if(curTab!=='scan'||busy||cur||document.hidden||!stream)continue;
     busy=true;
     try{
       const raw=grabTop();if(!raw)continue;
-      const img=prep(raw,tick++%2?'bin':'gray');showDbg(img);
-      const cands=candidates(await ocr(img)).slice(0,2);
-      let c=null;
-      for(const t of cands){c=await resolve(t);if(c)break}
-      if(!c){
+      const r=await readFrame(raw,tick++%2?'bin':'gray'),m=r.m;
+      if(!m||!m.ok){
         if(++miss>=4){lastName='';handled=''}
-        setMsg(cands.length?'Auto-scan: read "'+cands[0]+'", no match yet…':'Auto-scan: waiting for a card…');
+        setMsg(r.read?'Auto-scan: reading "'+r.read+'"…':'Auto-scan: waiting for a card…');
         continue;
       }
       miss=0;
-      if(c.name===handled){setMsg('Done — swap in the next card.','good');continue}
-      if(c.name!==lastName){lastName=c.name;continue}
-      handled=c.name;c=await exactPrint(c);
-      if($('autoAdd').checked){addToLib(c,false,1);setMsg('Added — swap in the next card.','good')}
-      else{setMsg('');await show(c)}
+      if(m.name===handled){setMsg('Done — swap in the next card.','good');continue}
+      if(m.name!==lastName){lastName=m.name;setMsg('Auto-scan: looks like '+m.name+'…');continue}
+      let c=m.card||await findByName(m.name);
+      if(!c)continue;
+      handled=m.name;c=await exactPrint(c);
+      if($('autoAdd').checked){addToLib(c,false,1);setMsg('Added '+c.name+' — swap in the next card.','good')}
+      else{setMsg('Read "'+r.read+'" → '+c.name);await show(c)}
     }catch(e){setMsg(e.message||String(e),'bad');await sleep(1500)}
     finally{busy=false}
   }
 }
 $('auto').onchange=e=>{autoOn=e.target.checked;lastName='';handled='';miss=0;if(autoOn){setMsg('Auto-scan on. Hold a card in the frame.');autoLoop()}else setMsg('')};
+
+// Clear: wipe the reading, result and typed name so the next attempt starts fresh
+$('btnClear').onclick=()=>{
+  cur=null;render();setMsg('');$('manual').value='';$('dbgwrap').classList.add('hide');
+  lastName='';handled='';miss=0;
+};
 
 $('file').onchange=async e=>{
   const f=e.target.files[0];e.target.value='';if(!f||busy)return;
@@ -497,7 +575,7 @@ $('file').onchange=async e=>{
     setMsg('Reading photo…');
     const top=crop(bmp,0,0,bmp.width,bmp.height*0.3,1400);
     const r=await identify(()=>top);
-    if(r.card){setMsg('');await show(r.card)}else noRead(r);
+    if(r.card)await show(r.card);else noRead(r);
   }catch(err){setMsg(err.message||'Could not read that image.','bad')}
   finally{busy=false}
 };
@@ -636,7 +714,7 @@ $('restore').onchange=async e=>{
   }catch(_){setLib('That file is not a valid backup.','bad')}
 };
 
-updateStats();startCam();
+updateStats();startCam();loadNames().catch(()=>{});
 })();
 </script>
 </body>
