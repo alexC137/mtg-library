@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>MTG Card Library</title>
+<style>
+:root{--bg:#14161b;--panel:#1e222a;--line:#2d333f;--text:#eef0f4;--mute:#9aa3b2;--acc:#f0b429;--ok:#3ecf8e;--bad:#ff6b6b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top))}
+.stats{display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+.stats b{font-size:20px;color:var(--acc)}.stats span{color:var(--mute);font-size:13px}
+nav{display:flex;gap:8px;margin-top:8px}
+nav button{flex:1;padding:10px;border:1px solid var(--line);background:transparent;color:var(--text);border-radius:10px;font-size:15px}
+nav button.on{background:var(--acc);color:#000;border-color:var(--acc);font-weight:600}
+main{padding:12px 14px;max-width:760px;margin:0 auto}
+.hide{display:none!important}
+button,select,input{font:inherit}
+.btn{padding:12px 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text)}
+.btn.pri{background:var(--acc);color:#000;border-color:var(--acc);font-weight:600}
+.btn.ok{background:var(--ok);color:#000;border-color:var(--ok);font-weight:600}
+.btn.sm{padding:6px 10px;font-size:14px}
+.row{display:flex;gap:8px;align-items:center}
+input[type=text],input[type=search],input[type=number],select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);min-width:0}
+#camwrap{position:relative;width:100%;height:58vh;max-height:560px;background:#000;border-radius:14px;overflow:hidden}
+#cam{width:100%;height:100%;object-fit:cover}
+#guide{position:absolute;border:2px solid rgba(240,180,41,.9);border-radius:10px;box-shadow:0 0 0 999px rgba(0,0,0,.45);pointer-events:none}
+#guide i{position:absolute;left:4%;top:3.5%;width:78%;height:9.5%;border:2px dashed #fff;border-radius:4px}
+#guide em{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-style:normal;font-size:12px;color:#fff}
+#nocam{padding:22px;text-align:center;color:var(--mute)}
+.msg{margin:10px 0;color:var(--mute);font-size:14px;min-height:20px}
+.msg.bad{color:var(--bad)}.msg.good{color:var(--ok)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px}
+.cardtop{display:flex;gap:12px}
+.cardtop img{width:120px;border-radius:8px;background:#000;align-self:flex-start}
+.cardtop h2{margin:0 0 2px;font-size:19px}
+.price{font-size:26px;font-weight:700;color:var(--ok)}
+.grid2{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.item{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.item img{width:44px;height:61px;border-radius:4px;background:#000;object-fit:cover}
+.item .m{flex:1;min-width:0}
+.item .n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .s{color:var(--mute);font-size:12px}
+.item .p{text-align:right;min-width:68px}
+.item .p small{display:block;color:var(--mute);font-size:11px}
+.qty{display:flex;align-items:center;gap:6px}
+.qty button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:18px;line-height:1}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.foil{color:#7cc7ff;font-size:12px;font-weight:600}
+label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14px}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.filters label{font-size:12px;color:var(--mute);display:block}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:13px}
+.chip.on{background:var(--acc);color:#000;border-color:var(--acc);font-weight:600}
+.grp{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.grp b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grp span{color:var(--mute);font-size:13px;white-space:nowrap}
+.grp span strong{color:var(--ok)}
+.summary{color:var(--mute);font-size:13px;margin:8px 0}
+.summary strong{color:var(--text)}
+#toast{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));background:#0b0d10;border:1px solid var(--ok);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;z-index:9}
+#toast div{flex:1;min-width:0}
+</style>
+</head>
+<body>
+<header>
+  <div class="stats">
+    <div><b id="sValue">$0.00</b> <span>total value</span></div>
+    <div><b id="sCards" style="color:var(--text)">0</b> <span>cards</span></div>
+    <div><b id="sUnique" style="color:var(--text)">0</b> <span>unique</span></div>
+  </div>
+  <nav>
+    <button id="tabScan" class="on">Scan</button>
+    <button id="tabLib">Library</button>
+  </nav>
+</header>
+
+<main>
+<section id="viewScan">
+  <div id="camwrap">
+    <video id="cam" playsinline muted autoplay></video>
+    <div id="guide"><i></i><em>Fit the card in the frame, title in the dashed box</em></div>
+  </div>
+  <div id="nocam" class="hide"></div>
+  <div class="row" style="margin-top:10px">
+    <button id="btnSnap" class="btn pri" style="flex:2">Scan card</button>
+    <label class="btn" style="flex:1;text-align:center;margin:0">Photo<input id="file" type="file" accept="image/*" capture="environment" hidden></label>
+  </div>
+  <div class="row" style="margin-top:8px;gap:16px">
+    <label class="chk"><input type="checkbox" id="auto"> Auto-scan</label>
+    <label class="chk"><input type="checkbox" id="autoAdd"> Add automatically</label>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <input id="manual" type="search" placeholder="Or type a card name…" enterkeyhint="search">
+    <button id="btnManual" class="btn">Find</button>
+  </div>
+  <div id="msg" class="msg"></div>
+  <div id="result"></div>
+</section>
+
+<section id="viewLib" class="hide">
+  <input id="filter" type="search" placeholder="Search name or set…">
+  <div class="filters">
+    <div><label>Group by</label><select id="group">
+      <option value="none">No grouping</option><option value="set">Set</option><option value="color">Color</option>
+      <option value="type">Card type</option><option value="rarity">Rarity</option></select></div>
+    <div><label>Sort by</label><select id="sort">
+      <option value="value">Total value</option><option value="price">Unit price</option>
+      <option value="name">Name</option><option value="cmc">Mana value</option><option value="recent">Recently added</option></select></div>
+    <div><label>Set</label><select id="fSet"></select></div>
+    <div><label>Card type</label><select id="fType"></select></div>
+    <div><label>Rarity</label><select id="fRar">
+      <option value="">All rarities</option><option value="common">Common</option><option value="uncommon">Uncommon</option>
+      <option value="rare">Rare</option><option value="mythic">Mythic</option><option value="other">Special / other</option></select></div>
+    <div><label>Min price ($ each)</label><input id="fMin" type="number" min="0" step="0.5" inputmode="decimal" placeholder="0"></div>
+  </div>
+  <div class="chips" id="colors"></div>
+  <div class="chips">
+    <button class="chip" id="fFoil">Foil only</button>
+    <button class="chip" id="fDup">Duplicates (2+)</button>
+    <button class="chip" id="fNoPrice">No price</button>
+    <button class="chip" id="fClear">Clear filters</button>
+  </div>
+  <div class="summary" id="summary"></div>
+  <div id="list"></div>
+  <div class="tools">
+    <button id="btnRefresh" class="btn sm">Refresh prices</button>
+    <button id="btnCsv" class="btn sm">Export CSV</button>
+    <button id="btnBackup" class="btn sm">Backup</button>
+    <label class="btn sm" style="margin:0">Restore<input id="restore" type="file" accept=".json,application/json" hidden></label>
+  </div>
+  <div id="libMsg" class="msg"></div>
+</section>
+</main>
+<div id="toast" class="hide"><div id="toastText"></div><button class="btn sm" id="undo">Undo</button></div>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const KEY='mtg-library-v1';
+// entry: {k,id,name,set,setName,yr,cn,rar,col[],type,cmc,foil,qty,price,added}
+let lib=[];
+try{lib=JSON.parse(localStorage.getItem(KEY)||'[]')||[]}catch(e){lib=[]}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(lib))}catch(e){setLib('Could not save — storage full or blocked. Use Backup.','bad')}}
+const money=n=>'$'+(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function setMsg(t,c){const m=$('msg');m.textContent=t||'';m.className='msg '+(c||'')}
+function setLib(t,c){const m=$('libMsg');m.textContent=t||'';m.className='msg '+(c||'')}
+const thumb=id=>'https://cards.scryfall.io/small/front/'+id[0]+'/'+id[1]+'/'+id+'.jpg';
+
+/* ---------- tabs ---------- */
+let curTab='scan';
+function tab(which){
+  curTab=which;
+  $('viewScan').classList.toggle('hide',which!=='scan');
+  $('viewLib').classList.toggle('hide',which!=='lib');
+  $('tabScan').classList.toggle('on',which==='scan');
+  $('tabLib').classList.toggle('on',which==='lib');
+  if(which==='lib'){buildFilterOptions();renderLib();stopCam()}else startCam();
+}
+$('tabScan').onclick=()=>tab('scan');
+$('tabLib').onclick=()=>tab('lib');
+
+/* ---------- camera ---------- */
+const cam=$('cam'),wrap=$('camwrap'),guide=$('guide');
+let stream=null;
+async function startCam(){
+  if(stream)return;
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){noCam('Live camera needs this page to be served over https. Use the Photo button instead.');return}
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
+    cam.srcObject=stream;await cam.play().catch(()=>{});
+    wrap.classList.remove('hide');$('nocam').classList.add('hide');layoutGuide();
+  }catch(e){noCam('Camera unavailable ('+(e.name||'error')+'). Allow camera access, or use the Photo button.')}
+}
+function stopCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
+function noCam(t){wrap.classList.add('hide');const n=$('nocam');n.textContent=t;n.classList.remove('hide')}
+function guideRect(){
+  const cw=wrap.clientWidth,ch=wrap.clientHeight;
+  let gh=ch*0.9,gw=gh*63/88;
+  if(gw>cw*0.86){gw=cw*0.86;gh=gw*88/63}
+  return {x:(cw-gw)/2,y:(ch-gh)/2,w:gw,h:gh,cw,ch};
+}
+function layoutGuide(){const g=guideRect();Object.assign(guide.style,{left:g.x+'px',top:g.y+'px',width:g.w+'px',height:g.h+'px'})}
+window.addEventListener('resize',layoutGuide);
+cam.addEventListener('loadedmetadata',layoutGuide);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopCam();else if(curTab==='scan')startCam()});
+
+// crop a region of the card guide (fractions of the guide box) out of the live video
+function grabRegion(fx,fy,fw,fh){
+  const vw=cam.videoWidth,vh=cam.videoHeight;if(!vw||!stream)return null;
+  const g=guideRect(),sc=Math.max(g.cw/vw,g.ch/vh);
+  const ox=(vw*sc-g.cw)/2,oy=(vh*sc-g.ch)/2;
+  return crop(cam,(g.x+g.w*fx+ox)/sc,(g.y+g.h*fy+oy)/sc,g.w*fw/sc,g.h*fh/sc);
+}
+const grabTitle=()=>grabRegion(0.03,0.03,0.80,0.105);
+const grabMeta=()=>grabRegion(0.03,0.925,0.55,0.07);
+function crop(src,sx,sy,sw,sh){
+  const scale=Math.max(1,Math.min(3,900/sw));
+  const c=document.createElement('canvas');c.width=Math.max(1,Math.round(sw*scale));c.height=Math.max(1,Math.round(sh*scale));
+  const x=c.getContext('2d');x.drawImage(src,sx,sy,sw,sh,0,0,c.width,c.height);
+  const d=x.getImageData(0,0,c.width,c.height),p=d.data;
+  let lo=255,hi=0;const g=new Uint8Array(c.width*c.height);
+  for(let i=0,j=0;i<p.length;i+=4,j++){const v=(p[i]*.3+p[i+1]*.59+p[i+2]*.11)|0;g[j]=v;if(v<lo)lo=v;if(v>hi)hi=v}
+  const r=Math.max(1,hi-lo);
+  for(let i=0,j=0;i<p.length;i+=4,j++){const v=((g[j]-lo)*255/r)|0;p[i]=p[i+1]=p[i+2]=v}
+  x.putImageData(d,0,0);return c;
+}
+
+/* ---------- OCR ---------- */
+let workerP=null;
+const NAMECHARS="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ',-";
+function getWorker(){
+  if(!window.Tesseract)return Promise.reject(new Error('Text recognition did not load (no connection?). Type the name instead.'));
+  if(!workerP)workerP=Tesseract.createWorker('eng').catch(e=>{workerP=null;throw e});
+  return workerP;
+}
+async function ocr(canvas,mode){ // 'line' = card title, 'block' = free text
+  const w=await getWorker();
+  await w.setParameters(mode==='line'?{tessedit_pageseg_mode:'7',tessedit_char_whitelist:NAMECHARS}:{tessedit_pageseg_mode:'6',tessedit_char_whitelist:''});
+  const r=await w.recognize(canvas);
+  return r.data.text||'';
+}
+const cleanName=t=>t.replace(/\s+/g,' ').replace(/^[^A-Za-z]+|[^A-Za-z]+$/g,'').trim();
+
+/* ---------- Scryfall ---------- */
+const API='https://api.scryfall.com';
+async function sj(url,opt){
+  const r=await fetch(url,opt);
+  if(r.status===404)return null;
+  if(!r.ok)throw new Error(r.status===429?'Scryfall is rate-limiting; wait a moment.':'Scryfall error '+r.status);
+  return r.json();
+}
+async function findByName(q){
+  q=q.trim();if(q.length<3)return null;
+  const c=await sj(API+'/cards/named?fuzzy='+encodeURIComponent(q));
+  if(c)return c;
+  await sleep(90);
+  const a=await sj(API+'/cards/autocomplete?q='+encodeURIComponent(q));
+  if(a&&a.data&&a.data.length===1){await sleep(90);return sj(API+'/cards/named?exact='+encodeURIComponent(a.data[0]))}
+  return null;
+}
+const faces=c=>c.card_faces&&c.card_faces[0]||{};
+const imgBig=c=>((c.image_uris||faces(c).image_uris||{}).normal)||thumb(c.id);
+function priceOf(c,foil){
+  const p=c.prices||{};
+  const a=foil?(p.usd_foil||p.usd_etched||p.usd):(p.usd||p.usd_foil||p.usd_etched);
+  return a?parseFloat(a):null;
+}
+const TYPES=['Land','Creature','Planeswalker','Instant','Sorcery','Artifact','Enchantment','Battle'];
+function mainType(tl){tl=(tl||'').split('//')[0];for(const t of TYPES)if(tl.indexOf(t)>=0)return t;return 'Other'}
+function meta(c){
+  return {name:c.name,set:c.set,setName:c.set_name,yr:(c.released_at||'').slice(0,4),cn:c.collector_number,
+    rar:c.rarity||'',col:(c.colors||faces(c).colors||[]).slice(),type:mainType(c.type_line||faces(c).type_line),cmc:c.cmc||0};
+}
+
+/* ---------- result panel ---------- */
+let cur=null,prints=[];
+async function show(card){
+  cur=card;prints=[card];render();
+  try{
+    if(card.prints_search_uri){
+      await sleep(90);
+      const d=await sj(card.prints_search_uri);
+      if(cur&&cur.oracle_id===card.oracle_id&&d&&d.data&&d.data.length){
+        prints=d.data;if(!prints.find(p=>p.id===cur.id))prints.unshift(cur);render();
+      }
+    }
+  }catch(e){}
+}
+function render(){
+  const c=cur;if(!c){$('result').innerHTML='';return}
+  const foilNow=$('foil')?$('foil').checked:false;
+  const pr=priceOf(c,foilNow);
+  $('result').innerHTML=`<div class="card">
+    <div class="cardtop">
+      <img src="${esc(imgBig(c))}" alt="">
+      <div style="flex:1;min-width:0">
+        <h2>${esc(c.name)}</h2>
+        <div style="color:var(--mute);font-size:13px">${esc(c.type_line||'')}</div>
+        <div class="price" id="rp">${pr!=null?money(pr):'No price'}</div>
+        <div style="color:var(--mute);font-size:12px">Market price via Scryfall (TCGplayer)</div>
+      </div>
+    </div>
+    <div class="grid2"><select id="printSel">${prints.map(p=>`<option value="${p.id}" ${p.id===c.id?'selected':''}>${esc((p.released_at||'').slice(0,4))} · ${esc(p.set_name)} #${esc(p.collector_number)} · ${priceOf(p,false)!=null?money(priceOf(p,false)):'—'}</option>`).join('')}</select></div>
+    <div style="color:var(--mute);font-size:12px;margin-top:4px">${prints.length>1?prints.length+' printings — check the set matches your card; prices differ a lot between printings.':''}</div>
+    <div class="grid2">
+      <label class="chk"><input type="checkbox" id="foil" ${foilNow?'checked':''}> Foil</label>
+      <div class="qty"><button id="qm">−</button><b id="qn">1</b><button id="qp">+</button></div>
+      <div style="flex:1"></div>
+      <button class="btn" id="skip">Skip</button>
+      <button class="btn ok" id="add">Add</button>
+    </div>
+  </div>`;
+  let q=1;
+  $('qm').onclick=()=>{q=Math.max(1,q-1);$('qn').textContent=q};
+  $('qp').onclick=()=>{q++;$('qn').textContent=q};
+  $('foil').onchange=()=>{const p=priceOf(cur,$('foil').checked);$('rp').textContent=p!=null?money(p):'No price'};
+  $('printSel').onchange=e=>{const p=prints.find(x=>x.id===e.target.value);if(p){cur=p;render()}};
+  $('skip').onclick=()=>{cur=null;render();setMsg('')};
+  $('add').onclick=()=>{const c2=cur,f=$('foil').checked;cur=null;render();addToLib(c2,f,q)};
+}
+let lastAdd=null,toastT=null;
+function addToLib(c,foil,n){
+  const k=c.id+(foil?'f':'n');
+  let it=lib.find(x=>x.k===k);
+  if(it)it.qty+=n;
+  else{it=Object.assign({k,id:c.id,foil,qty:n,price:priceOf(c,foil),added:Date.now()},meta(c));lib.push(it)}
+  save();updateStats();
+  lastAdd={k,n};
+  $('toastText').innerHTML='<b>Added '+esc(c.name)+(n>1?' ×'+n:'')+'</b><br><span style="color:var(--mute);font-size:12px">'+esc(c.set_name)+' · '+(it.price!=null?money(it.price):'no price')+'</span>';
+  $('toast').classList.remove('hide');clearTimeout(toastT);toastT=setTimeout(()=>$('toast').classList.add('hide'),4500);
+  if(navigator.vibrate)navigator.vibrate(40);
+}
+$('undo').onclick=()=>{
+  if(!lastAdd)return;
+  const it=lib.find(x=>x.k===lastAdd.k);
+  if(it){it.qty-=lastAdd.n;if(it.qty<=0)lib=lib.filter(x=>x!==it)}
+  lastAdd=null;save();updateStats();$('toast').classList.add('hide');setMsg('Removed.','');
+};
+
+/* ---------- scan flow ---------- */
+let busy=false;
+// Try to read the set code + collector number printed bottom-left (2014+ cards) to pick the exact printing.
+async function exactPrint(card){
+  try{
+    const m=grabMeta();if(!m)return card;
+    const t=(await ocr(m,'block')).toUpperCase();
+    const num=(t.match(/\b0*(\d{1,4})\s*\/\s*\d{2,4}/)||t.match(/\b0*(\d{1,4})\b/)||[])[1];
+    const set=(t.match(/\b([A-Z][A-Z0-9]{2,4})\s*[^A-Z0-9\s]?\s*EN\b/)||[])[1];
+    if(!num||!set)return card;
+    await sleep(90);
+    const c=await sj(API+'/cards/'+set.toLowerCase()+'/'+num);
+    return c&&c.name===card.name?c:card;
+  }catch(e){return card}
+}
+async function lookup(text,live){
+  setMsg('Read "'+text+'" — looking up…');
+  let c=await findByName(text);
+  if(!c)return null;
+  if(live)c=await exactPrint(c);
+  return c;
+}
+async function scanOnce(){
+  if(busy)return;
+  const cv=grabTitle();
+  if(!cv){setMsg('Camera not ready. Use the Photo button.','bad');return}
+  busy=true;
+  try{
+    setMsg('Reading card…');
+    const text=cleanName(await ocr(cv,'line'));
+    if(text.length<3){setMsg('Could not read the title. Reposition, or type the name.','bad');return}
+    const c=await lookup(text,true);
+    if(!c){setMsg('No match for "'+text+'". Try again or type the name.','bad');$('manual').value=text;return}
+    setMsg('');await show(c);
+  }catch(e){setMsg(e.message||String(e),'bad')}
+  finally{busy=false}
+}
+$('btnSnap').onclick=scanOnce;
+
+// Auto-scan: read the title repeatedly; act when the same text is read twice in a row.
+let autoOn=false,prevText='',handled='';
+async function autoLoop(){
+  while(autoOn){
+    await sleep(350);
+    if(!autoOn)break;
+    if(curTab!=='scan'||busy||cur||document.hidden||!stream)continue;
+    busy=true;
+    try{
+      const cv=grabTitle();if(!cv)continue;
+      const text=cleanName(await ocr(cv,'line'));
+      if(text.length<3){prevText='';handled='';setMsg('Auto-scan: waiting for a card…');continue}
+      if(text!==prevText){prevText=text;continue}
+      if(text===handled){setMsg('Done — swap in the next card.','good');continue}
+      const c=await lookup(text,true);
+      if(!c){setMsg('Auto-scan: no match for "'+text+'" yet…');continue}
+      handled=text;
+      if($('autoAdd').checked){addToLib(c,false,1);setMsg('Added — swap in the next card.','good')}
+      else{setMsg('');await show(c)}
+    }catch(e){setMsg(e.message||String(e),'bad');await sleep(1500)}
+    finally{busy=false}
+  }
+}
+$('auto').onchange=e=>{autoOn=e.target.checked;prevText='';handled='';if(autoOn){setMsg('Auto-scan on. Hold a card in the frame.');autoLoop()}else setMsg('')};
+
+$('file').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f||busy)return;
+  busy=true;
+  try{
+    const bmp=await createImageBitmap(f);
+    setMsg('Reading photo…');
+    const lines=(await ocr(crop(bmp,0,0,bmp.width,bmp.height*0.3),'block')).split('\n').map(cleanName).filter(s=>s.length>=3).slice(0,3);
+    let c=null,used='';
+    for(const l of lines){used=l;c=await lookup(l,false);if(c)break;await sleep(90)}
+    if(!c){setMsg('Could not identify the card from that photo. Fill the frame with the card, or type the name.','bad');if(used)$('manual').value=used;return}
+    setMsg('');await show(c);
+  }catch(err){setMsg(err.message||'Could not read that image.','bad')}
+  finally{busy=false}
+};
+async function manual(){
+  const q=$('manual').value;if(busy||!q.trim())return;busy=true;
+  try{const c=await lookup(q,false);
+    if(!c)setMsg('No match for "'+q+'".','bad');else{setMsg('');$('manual').value='';await show(c)}
+  }catch(e){setMsg(e.message,'bad')}finally{busy=false}
+}
+$('btnManual').onclick=manual;
+$('manual').addEventListener('keydown',e=>{if(e.key==='Enter')manual()});
+
+/* ---------- library ---------- */
+function updateStats(){
+  let v=0,n=0;lib.forEach(i=>{n+=i.qty;v+=(i.price||0)*i.qty});
+  $('sValue').textContent=money(v);$('sCards').textContent=n.toLocaleString();$('sUnique').textContent=lib.length.toLocaleString();
+}
+const COLORS=[['W','White'],['U','Blue'],['B','Black'],['R','Red'],['G','Green'],['M','Multicolor'],['C','Colorless']];
+const CNAME={W:'White',U:'Blue',B:'Black',R:'Red',G:'Green',M:'Multicolor',C:'Colorless'};
+const colorKey=i=>{const c=i.col||[];return c.length===0?'C':c.length>1?'M':c[0]};
+const rarKey=i=>['common','uncommon','rare','mythic'].indexOf(i.rar)>=0?i.rar:'other';
+const RORDER={mythic:0,rare:1,uncommon:2,common:3,other:4};
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const F={colors:new Set(),foil:false,dup:false,noPrice:false};
+const open=new Set();
+
+$('colors').innerHTML=COLORS.map(c=>`<button class="chip" data-c="${c[0]}">${c[1]}</button>`).join('');
+$('colors').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;const c=b.dataset.c;F.colors.has(c)?F.colors.delete(c):F.colors.add(c);b.classList.toggle('on');renderLib()};
+[['fFoil','foil'],['fDup','dup'],['fNoPrice','noPrice']].forEach(([id,key])=>{$(id).onclick=()=>{F[key]=!F[key];$(id).classList.toggle('on',F[key]);renderLib()}});
+$('fClear').onclick=()=>{
+  F.colors.clear();F.foil=F.dup=F.noPrice=false;
+  document.querySelectorAll('#viewLib .chip.on').forEach(b=>b.classList.remove('on'));
+  $('filter').value='';$('fSet').value='';$('fType').value='';$('fRar').value='';$('fMin').value='';renderLib();
+};
+function buildFilterOptions(){
+  const keep=$('fSet').value,keepT=$('fType').value;
+  const sets=new Map();lib.forEach(i=>{if(!sets.has(i.set))sets.set(i.set,{n:i.setName,y:i.yr||'',c:0});sets.get(i.set).c+=i.qty});
+  const arr=[...sets].sort((a,b)=>a[1].n.localeCompare(b[1].n));
+  $('fSet').innerHTML='<option value="">All sets ('+arr.length+')</option>'+arr.map(([k,v])=>`<option value="${esc(k)}">${esc(v.n)} (${v.c})</option>`).join('');
+  $('fSet').value=sets.has(keep)?keep:'';
+  $('fType').innerHTML='<option value="">All types</option>'+TYPES.concat('Other').map(t=>`<option>${t}</option>`).join('');
+  $('fType').value=keepT;
+}
+function filtered(){
+  const f=$('filter').value.trim().toLowerCase(),fs=$('fSet').value,ft=$('fType').value,fr=$('fRar').value,min=parseFloat($('fMin').value)||0;
+  return lib.filter(i=>
+    (!f||i.name.toLowerCase().includes(f)||(i.setName||'').toLowerCase().includes(f)||i.set===f)&&
+    (!fs||i.set===fs)&&(!ft||i.type===ft)&&(!fr||rarKey(i)===fr)&&
+    (!min||(i.price||0)>=min)&&
+    (!F.colors.size||F.colors.has(colorKey(i))||(i.col||[]).some(c=>F.colors.has(c)))&&
+    (!F.foil||i.foil)&&(!F.dup||i.qty>1)&&(!F.noPrice||i.price==null));
+}
+const SORTS={value:(x,y)=>(y.price||0)*y.qty-(x.price||0)*x.qty,price:(x,y)=>(y.price||0)-(x.price||0),
+  name:(x,y)=>x.name.localeCompare(y.name),cmc:(x,y)=>(x.cmc||0)-(y.cmc||0)||x.name.localeCompare(y.name),recent:(x,y)=>y.added-x.added};
+function itemHtml(i){
+  return `<div class="item" data-k="${i.k}">
+    <img loading="lazy" src="${thumb(i.id)}" alt="">
+    <div class="m"><div class="n">${esc(i.name)} ${i.foil?'<span class="foil">FOIL</span>':''}</div>
+      <div class="s">${esc(i.setName)} #${esc(i.cn)} · ${esc(cap(rarKey(i)))} · ${esc(i.type||'')}</div>
+      <div class="qty" style="margin-top:4px"><button data-a="m">−</button><b>${i.qty}</b><button data-a="p">+</button><button data-a="d" style="width:auto;padding:0 8px;font-size:12px;color:var(--bad)">Remove</button></div></div>
+    <div class="p"><b>${i.price!=null?money(i.price*i.qty):'—'}</b><small>${i.price!=null?money(i.price)+' ea':'no price'}</small></div>
+  </div>`;
+}
+function renderLib(){
+  const a=filtered().sort(SORTS[$('sort').value]);
+  let n=0,v=0;a.forEach(i=>{n+=i.qty;v+=(i.price||0)*i.qty});
+  $('summary').innerHTML=lib.length?`Showing <strong>${n.toLocaleString()}</strong> cards (${a.length.toLocaleString()} unique) worth <strong>${money(v)}</strong>`:'';
+  const g=$('group').value;
+  if(!a.length){$('list').innerHTML='<div class="msg">'+(lib.length?'No cards match these filters.':'Nothing here yet. Scan some cards.')+'</div>';return}
+  if(g==='none'){
+    $('list').innerHTML=a.slice(0,300).map(itemHtml).join('')+(a.length>300?'<div class="msg">Showing the first 300 of '+a.length+'. Narrow with filters, or export CSV for everything.</div>':'');
+    return;
+  }
+  const groups=new Map();
+  a.forEach(i=>{
+    let key,label,ord;
+    if(g==='set'){key=i.set;label=i.setName+(i.yr?' ('+i.yr+')':'');ord=label}
+    else if(g==='color'){key=colorKey(i);label=CNAME[key];ord='WUBRGMC'.indexOf(key)}
+    else if(g==='type'){key=i.type||'Other';label=key;ord=(TYPES.indexOf(key)+1)||99}
+    else{key=rarKey(i);label=cap(key);ord=RORDER[key]}
+    if(!groups.has(key))groups.set(key,{key,label,ord,items:[],n:0,v:0});
+    const G=groups.get(key);G.items.push(i);G.n+=i.qty;G.v+=(i.price||0)*i.qty;
+  });
+  const gs=[...groups.values()].sort((x,y)=>g==='set'?y.v-x.v||String(x.ord).localeCompare(String(y.ord)):x.ord-y.ord);
+  $('list').innerHTML=gs.map(G=>{
+    const id=g+':'+G.key,isOpen=open.has(id);
+    return `<div class="grp" data-g="${esc(id)}"><b>${isOpen?'▾':'▸'} ${esc(G.label)}</b><span>${G.n.toLocaleString()} cards · <strong>${money(G.v)}</strong></span></div>`+
+      (isOpen?G.items.slice(0,200).map(itemHtml).join('')+(G.items.length>200?'<div class="msg">First 200 of '+G.items.length+' shown.</div>':''):'');
+  }).join('');
+}
+$('list').addEventListener('click',e=>{
+  const gr=e.target.closest('.grp');
+  if(gr){const id=gr.dataset.g;open.has(id)?open.delete(id):open.add(id);renderLib();return}
+  const b=e.target.closest('button');if(!b)return;
+  const row=b.closest('.item'),it=lib.find(x=>x.k===row.dataset.k);if(!it)return;
+  if(b.dataset.a==='p')it.qty++;
+  else if(b.dataset.a==='m')it.qty=Math.max(1,it.qty-1);
+  else if(b.dataset.a==='d')lib=lib.filter(x=>x!==it);
+  save();updateStats();if(b.dataset.a==='d')buildFilterOptions();renderLib();
+});
+let ft=null;
+['filter','fMin'].forEach(id=>$(id).oninput=()=>{clearTimeout(ft);ft=setTimeout(renderLib,150)});
+['sort','group','fSet','fType','fRar'].forEach(id=>$(id).onchange=renderLib);
+
+$('btnRefresh').onclick=async()=>{
+  if(!lib.length)return;
+  const btn=$('btnRefresh');btn.disabled=true;
+  try{
+    const ids=[...new Set(lib.map(i=>i.id))];let done=0;
+    for(let i=0;i<ids.length;i+=75){
+      setLib('Updating prices… '+done+' / '+ids.length);
+      const d=await sj(API+'/cards/collection',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({identifiers:ids.slice(i,i+75).map(id=>({id}))})});
+      ((d&&d.data)||[]).forEach(c=>lib.forEach(it=>{if(it.id===c.id){Object.assign(it,meta(c));it.price=priceOf(c,it.foil)}}));
+      done=Math.min(ids.length,i+75);await sleep(120);
+    }
+    save();updateStats();buildFilterOptions();renderLib();setLib('Prices updated for '+ids.length+' printings.','good');
+  }catch(e){setLib(e.message,'bad')}finally{btn.disabled=false}
+};
+
+function dl(name,text,type){
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+}
+$('btnCsv').onclick=()=>{
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const rows=[['Name','Set Code','Set Name','Year','Collector #','Rarity','Colors','Type','Mana Value','Foil','Qty','Unit Price USD','Total USD','Scryfall ID']];
+  lib.forEach(i=>rows.push([i.name,i.set,i.setName,i.yr,i.cn,i.rar,(i.col||[]).join(''),i.type,i.cmc,i.foil?'Yes':'No',i.qty,i.price!=null?i.price.toFixed(2):'',i.price!=null?(i.price*i.qty).toFixed(2):'',i.id]));
+  dl('mtg-library.csv',rows.map(r=>r.map(q).join(',')).join('\n'),'text/csv');
+};
+$('btnBackup').onclick=()=>dl('mtg-library-backup.json',JSON.stringify(lib),'application/json');
+$('restore').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{const d=JSON.parse(await f.text());if(!Array.isArray(d))throw 0;
+    let n=0;d.forEach(x=>{if(!x||!x.k||!x.id||!x.name)return;n++;const o=lib.find(y=>y.k===x.k);if(o)o.qty=Math.max(o.qty,x.qty||1);else lib.push(x)});
+    save();updateStats();buildFilterOptions();renderLib();setLib('Restored '+n+' entries.','good');
+  }catch(_){setLib('That file is not a valid backup.','bad')}
+};
+
+updateStats();startCam();
+})();
+</script>
+</body>
+</html>
