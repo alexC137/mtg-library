@@ -81,6 +81,7 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
     <button id="tabScan" class="on">Scan</button>
     <button id="tabLib">Library</button>
   </nav>
+  <button id="helpBtn" title="How to use" style="flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:17px;font-weight:700">?</button>
 </header>
 
 <main>
@@ -184,6 +185,49 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
   <div id="libMsg" class="msg"></div>
 </section>
 </main>
+<div id="help" class="hide" style="position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.6);overflow:auto;padding:16px;padding-top:calc(16px + env(safe-area-inset-top))">
+  <div style="max-width:620px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 16px calc(16px + env(safe-area-inset-bottom))">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <h2 style="margin:0;font-size:20px;flex:1">How to use the card scanner</h2>
+      <button id="helpClose" class="btn pri">Done</button>
+    </div>
+    <p style="color:var(--mute);font-size:14px;margin:0 0 14px">Scan Magic cards with your phone to build a price-tracked library. Everything you add is stored on your own phone only — nobody else can see it.</p>
+
+    <h3 style="margin:16px 0 4px;font-size:16px">First time</h3>
+    <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.55">
+      <li>Open this page on your phone and tap <b>Allow</b> when it asks for the camera (and the microphone, if you want voice).</li>
+      <li>Tap the share icon and <b>Add to Home Screen</b> so it opens like an app.</li>
+      <li>If the picture is blurry, tap <b>Camera</b> to switch to the main lens, and use the <b>Zoom</b> slider so the card fills the frame from about a foot away.</li>
+    </ul>
+
+    <h3 style="margin:16px 0 4px;font-size:16px">Scanning a card</h3>
+    <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.55">
+      <li>Hold the card so its <b>name sits above the dashed line</b>, then tap <b>Scan card</b>.</li>
+      <li>It shows the card and its market price. Tap <b>Add</b> to save it, or <b>Clear</b> and try again.</li>
+      <li><b>Auto-scan</b> reads on its own — just swap cards in and out of the frame.</li>
+      <li>Tick <b>Add automatically</b> to save each card the moment it's recognized (you'll hear a beep). Leave it off for valuable cards so you can confirm the exact printing first.</li>
+    </ul>
+
+    <h3 style="margin:16px 0 4px;font-size:16px">Voice</h3>
+    <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.55">
+      <li>Tap <b>Voice</b> and say a card name — often faster than the camera. Say <b>"undo that"</b> to remove the last one.</li>
+    </ul>
+
+    <h3 style="margin:16px 0 4px;font-size:16px">Decks &amp; sideboards</h3>
+    <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.55">
+      <li>Above the camera, pick a deck (or <b>+ New deck…</b>) before scanning. Everything you scan goes into that deck.</li>
+      <li>The <b>Main deck / Sideboard</b> button sets which pile you're adding to. By voice, say "sideboard" or "main deck".</li>
+      <li>In the <b>Library</b> tab you can filter and group by deck, and move cards between decks.</li>
+    </ul>
+
+    <h3 style="margin:16px 0 4px;font-size:16px">Your library</h3>
+    <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.55">
+      <li>Filter, sort, and group your cards, and tap <b>Refresh prices</b> to update values.</li>
+      <li><b>Export to Excel</b> (or CSV) saves the whole collection to a spreadsheet.</li>
+      <li>Your library lives only in this phone's browser. Tap <b>Backup</b> now and then, and don't clear the browser's site data or you'll lose it. Use <b>Restore</b> to bring a backup back.</li>
+    </ul>
+  </div>
+</div>
 <div id="toast" class="hide"><div id="toastText"></div><button class="btn sm" id="undo">Undo</button></div>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -215,6 +259,8 @@ function tab(which){
 }
 $('tabScan').onclick=()=>tab('scan');
 $('tabLib').onclick=()=>tab('lib');
+$('helpBtn').onclick=()=>{$('help').classList.remove('hide');stopCam();stopVoice()};
+$('helpClose').onclick=()=>{$('help').classList.add('hide');if(curTab==='scan')startCam()};
 
 /* ---------- camera ---------- */
 const cam=$('cam'),wrap=$('camwrap'),guide=$('guide');
