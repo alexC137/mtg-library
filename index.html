@@ -139,6 +139,7 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
   <div id="list"></div>
   <div class="tools">
     <button id="btnRefresh" class="btn sm">Refresh prices</button>
+    <button id="btnXlsx" class="btn sm pri">Export to Excel</button>
     <button id="btnCsv" class="btn sm">Export CSV</button>
     <button id="btnBackup" class="btn sm">Backup</button>
     <label class="btn sm" style="margin:0">Restore<input id="restore" type="file" accept=".json,application/json" hidden></label>
@@ -252,7 +253,7 @@ $('torch').onclick=async()=>{
   if(!stream)return;
   try{torchOn=!torchOn;await stream.getVideoTracks()[0].applyConstraints({advanced:[{torch:torchOn}]});$('torch').classList.toggle('pri',torchOn)}catch(e){torchOn=false}
 };
-const grabTop=()=>grabRegion(-0.02,-0.01,1.04,0.17,1300);   // whole top band of the card, so alignment is forgiving
+const grabTop=()=>grabRegion(-0.02,-0.01,1.04,0.15,1100);   // whole top band of the card, so alignment is forgiving
 const grabMeta=()=>grabRegion(0.02,0.915,0.62,0.08,900);
 function crop(src,sx,sy,sw,sh,tw){
   const scale=Math.min(4,(tw||1200)/sw);
@@ -471,9 +472,15 @@ async function resolve(t){
   const c=await findByName(t);await sleep(100);seen.set(k,c);return c;
 }
 // Try to read the set code + collector number printed bottom-left (2014+ cards) to pick the exact printing.
-async function exactPrint(card){
+const cardByName=new Map(); // cards already looked up this visit (repeat copies are instant)
+async function cardFor(name){
+  const k=name.toLowerCase();if(cardByName.has(k))return cardByName.get(k);
+  const c=await findByName(name);if(c)cardByName.set(k,c);return c;
+}
+// m = picture of the card's bottom-left corner taken at the same moment as the name
+async function exactPrint(card,m){
   try{
-    const m=grabMeta();if(!m)return card;
+    if(!m)return card;
     const t=((await ocr(prep(m,'gray'))).text||'').toUpperCase();
     const num=(t.match(/\b0*(\d{1,4})\s*\/\s*\d{2,4}/)||t.match(/\b0*(\d{1,4})\b/)||[])[1];
     const set=(t.match(/\b([A-Z][A-Z0-9]{2,4})\s*[^A-Z0-9\s]?\s*EN\b/)||[])[1];
@@ -495,6 +502,13 @@ async function readFrame(raw,mode){
   }
   return {read,m};
 }
+// Show the card straight away, then quietly switch to the exact printing if the corner text can be read.
+async function showThenRefine(card,meta){
+  const p=exactPrint(card,meta);
+  await show(card);
+  const c=await p;
+  if(c.id!==card.id&&cur&&cur.id===card.id){cur=c;if(!prints.find(x=>x.id===c.id))prints.unshift(c);render()}
+}
 // Try up to three image treatments and keep the best match.
 async function identify(getCanvas){
   await loadNames().catch(()=>{});
@@ -504,11 +518,11 @@ async function identify(getCanvas){
     const r=await readFrame(raw,mode);
     if(!read)read=r.read;
     if(r.m&&(!best||r.m.sim>best.sim)){best=r.m;best.read=r.read}
-    if(best&&best.ok&&best.sim>=0.9)break;
+    if(best&&best.ok&&best.sim>=0.82)break;
   }
   if(best&&best.ok){
     setMsg('Read "'+best.read+'" → '+best.name);
-    const c=best.card||await findByName(best.name);
+    const c=best.card||await cardFor(best.name);
     if(c)return {card:c,read:best.read};
   }
   return {read:best?best.read:read,near:best?best.name:''};
@@ -523,8 +537,9 @@ async function scanOnce(){
   busy=true;
   try{
     setMsg('Reading card…');
-    const r=await identify(grabTop);
-    if(r.card){const c=await exactPrint(r.card);await show(c)}else noRead(r);
+    let meta=null;
+    const r=await identify(()=>{const t=grabTop();if(t&&!meta)meta=grabMeta();return t});
+    if(r.card)await showThenRefine(r.card,meta);else noRead(r);
   }catch(e){setMsg(e.message||String(e),'bad')}
   finally{busy=false}
 }
@@ -535,12 +550,12 @@ let autoOn=false,lastName='',handled='',miss=0,tick=0;
 async function autoLoop(){
   await loadNames().catch(()=>{});
   while(autoOn){
-    await sleep(250);
+    await sleep(80);
     if(!autoOn)break;
     if(curTab!=='scan'||busy||cur||document.hidden||!stream)continue;
     busy=true;
     try{
-      const raw=grabTop();if(!raw)continue;
+      const raw=grabTop(),meta=grabMeta();if(!raw)continue;
       const r=await readFrame(raw,tick++%2?'bin':'gray'),m=r.m;
       if(!m||!m.ok){
         if(++miss>=4){lastName='';handled=''}
@@ -549,12 +564,12 @@ async function autoLoop(){
       }
       miss=0;
       if(m.name===handled){setMsg('Done — swap in the next card.','good');continue}
-      if(m.name!==lastName){lastName=m.name;setMsg('Auto-scan: looks like '+m.name+'…');continue}
-      let c=m.card||await findByName(m.name);
+      if(m.name!==lastName&&m.sim<0.9){lastName=m.name;setMsg('Auto-scan: looks like '+m.name+'…');continue} // unsure: wait for a second matching read
+      let c=m.card||await cardFor(m.name);
       if(!c)continue;
-      handled=m.name;c=await exactPrint(c);
-      if($('autoAdd').checked){addToLib(c,false,1);setMsg('Added '+c.name+' — swap in the next card.','good')}
-      else{setMsg('Read "'+r.read+'" → '+c.name);await show(c)}
+      handled=lastName=m.name;
+      if($('autoAdd').checked){c=await exactPrint(c,meta);addToLib(c,false,1);setMsg('Added '+c.name+' — swap in the next card.','good')}
+      else{setMsg('Read "'+r.read+'" → '+c.name);await showThenRefine(c,meta)}
     }catch(e){setMsg(e.message||String(e),'bad');await sleep(1500)}
     finally{busy=false}
   }
@@ -705,6 +720,35 @@ $('btnCsv').onclick=()=>{
   lib.forEach(i=>rows.push([i.name,i.set,i.setName,i.yr,i.cn,i.rar,(i.col||[]).join(''),i.type,i.cmc,i.foil?'Yes':'No',i.qty,i.price!=null?i.price.toFixed(2):'',i.price!=null?(i.price*i.qty).toFixed(2):'',i.id]));
   dl('mtg-library.csv',rows.map(r=>r.map(q).join(',')).join('\n'),'text/csv');
 };
+function loadXLSX(){
+  if(window.XLSX)return Promise.resolve();
+  return new Promise((res,rej)=>{const t=document.createElement('script');t.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';t.onload=res;t.onerror=()=>{t.remove();rej(new Error('load'))};document.head.appendChild(t)});
+}
+$('btnXlsx').onclick=async()=>{
+  if(!lib.length){setLib('Nothing to export yet.');return}
+  setLib('Building Excel file…');
+  try{await loadXLSX()}catch(e){setLib('Could not load the Excel builder (no connection?). Export CSV works offline and opens in Excel too.','bad');return}
+  try{
+    const head=['Name','Set','Set Code','Year','Collector #','Rarity','Color','Card Type','Mana Value','Foil','Qty','Unit Price','Total Value','Date Added','Scryfall ID'];
+    const day=t=>t?new Date(t).toISOString().slice(0,10):'';
+    const rows=lib.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(i=>[i.name,i.setName,(i.set||'').toUpperCase(),i.yr?+i.yr:'',i.cn,cap(rarKey(i)),CNAME[colorKey(i)],i.type||'',i.cmc||0,i.foil?'Yes':'No',i.qty,i.price!=null?i.price:'',i.price!=null?+(i.price*i.qty).toFixed(2):'',day(i.added),i.id]);
+    const ws=XLSX.utils.aoa_to_sheet([head].concat(rows));
+    ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:rows.length,c:head.length-1}})};
+    ws['!cols']=[34,30,9,7,11,11,12,14,11,6,6,11,12,12,38].map(w=>({wch:w}));
+    for(let r=1;r<=rows.length;r++)for(const c of [11,12]){const cell=ws[XLSX.utils.encode_cell({r,c})];if(cell&&cell.t==='n')cell.z='$#,##0.00'}
+    const sets=new Map();
+    lib.forEach(i=>{const k=i.set;if(!sets.has(k))sets.set(k,[i.setName,(i.set||'').toUpperCase(),i.yr?+i.yr:'',0,0,0]);const g=sets.get(k);g[3]+=i.qty;g[4]++;g[5]+=(i.price||0)*i.qty});
+    const srows=[...sets.values()].sort((a,b)=>b[5]-a[5]).map(g=>{g[5]=+g[5].toFixed(2);return g});
+    const ws2=XLSX.utils.aoa_to_sheet([['Set','Set Code','Year','Cards','Unique','Total Value']].concat(srows));
+    ws2['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:srows.length,c:5}})};
+    ws2['!cols']=[34,9,7,8,8,12].map(w=>({wch:w}));
+    for(let r=1;r<=srows.length;r++){const cell=ws2[XLSX.utils.encode_cell({r,c:5})];if(cell)cell.z='$#,##0.00'}
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Library');XLSX.utils.book_append_sheet(wb,ws2,'By Set');
+    XLSX.writeFile(wb,'mtg-library-'+day(Date.now())+'.xlsx');
+    setLib('Excel file saved to your downloads.','good');
+  }catch(e){setLib('Excel export failed ('+(e.message||e)+'). Use Export CSV instead.','bad')}
+};
 $('btnBackup').onclick=()=>dl('mtg-library-backup.json',JSON.stringify(lib),'application/json');
 $('restore').onchange=async e=>{
   const f=e.target.files[0];e.target.value='';if(!f)return;
@@ -714,7 +758,7 @@ $('restore').onchange=async e=>{
   }catch(_){setLib('That file is not a valid backup.','bad')}
 };
 
-updateStats();startCam();loadNames().catch(()=>{});
+updateStats();startCam();loadNames().catch(()=>{});getWorker().catch(()=>{}); // warm up so the first scan isn't slow
 })();
 </script>
 </body>
