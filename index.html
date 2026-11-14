@@ -9,11 +9,11 @@
 :root{--bg:#14161b;--panel:#1e222a;--line:#2d333f;--text:#eef0f4;--mute:#9aa3b2;--acc:#f0b429;--ok:#3ecf8e;--bad:#ff6b6b}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
-header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);padding:5px 10px;padding-top:calc(5px + env(safe-area-inset-top));display:flex;align-items:center;gap:8px}
-.stats{display:flex;gap:10px;align-items:baseline;flex:1;min-width:0;white-space:nowrap;overflow:hidden}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);padding:5px 10px;padding-top:calc(5px + env(safe-area-inset-top));display:flex;align-items:center;gap:6px}
+.stats{display:flex;gap:9px;align-items:baseline;flex:1;min-width:0;white-space:nowrap;overflow:hidden}
 .stats b{font-size:15px;color:var(--acc)}.stats span{color:var(--mute);font-size:11px}
 nav{display:flex;gap:6px}
-nav button{padding:7px 12px;border:1px solid var(--line);background:transparent;color:var(--text);border-radius:9px;font-size:14px}
+nav button{padding:7px 10px;border:1px solid var(--line);background:transparent;color:var(--text);border-radius:9px;font-size:14px}
 nav button.on{background:var(--acc);color:#000;border-color:var(--acc);font-weight:600}
 main{padding:8px 12px;max-width:760px;margin:0 auto}
 .hide{display:none!important}
@@ -81,7 +81,7 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
     <button id="tabScan" class="on">Scan</button>
     <button id="tabLib">Library</button>
   </nav>
-  <button id="helpBtn" title="How to use" style="flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:17px;font-weight:700">?</button>
+  <button id="helpBtn" title="How to use" style="flex:none;width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:transparent;color:var(--mute);font-size:14px;font-weight:700;padding:0">?</button>
 </header>
 
 <main>
