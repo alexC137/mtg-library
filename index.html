@@ -126,7 +126,7 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
   </div>
   <div class="row" id="camctl" style="margin-top:8px">
     <span style="color:var(--mute);font-size:13px">Zoom</span>
-    <input id="zoom" type="range" min="1" max="4" step="0.1" value="1" style="flex:1">
+    <input id="zoom" type="range" min="1" max="3" step="0.1" value="1" style="flex:1">
     <b id="zoomv" style="min-width:38px;text-align:right">1.0×</b>
     <button id="torch" class="btn sm hide">Light</button>
     <button id="swap" class="btn sm hide">Camera</button>
@@ -194,6 +194,7 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
       <button id="helpClose" class="btn pri">Done</button>
     </div>
     <p style="color:var(--mute);font-size:14px;margin:0 0 14px">Scan Magic cards with your phone to build a price-tracked library. Everything you add is stored on your own phone only — nobody else can see it.</p>
+    <button id="helpJump" class="btn sm" style="margin-bottom:4px">What it does behind the scenes ↓</button>
 
     <h3 style="margin:16px 0 4px;font-size:16px">First time</h3>
     <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.55">
@@ -228,6 +229,19 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
       <li><b>Tap any card</b> to see it full size and fix its printing, foil, quantity, or deck.</li>
       <li><b>Export to Excel</b> (or CSV) saves the whole collection to a spreadsheet.</li>
       <li>Your library lives only in this phone's browser. Tap <b>Backup</b> now and then, and don't clear the browser's site data or you'll lose it. Use <b>Restore</b> to bring a backup back.</li>
+    </ul>
+
+    <h3 id="helpFeat" style="margin:22px 0 4px;font-size:16px;padding-top:12px;border-top:1px solid var(--line)">What it does behind the scenes</h3>
+    <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.55">
+      <li><b>It doesn't need a perfect read.</b> Whatever the camera reads is compared against the name of every Magic card ever printed, and the closest match wins. If nothing is close enough, it skips the card instead of guessing.</li>
+      <li><b>It keeps checking after the beep.</b> The card is saved the instant the name is recognized, so you can move on. In the background it then reads the small print in the card's bottom-left corner (set code and collector number) and, if that points to a different printing, quietly swaps the saved card to the right version.</li>
+      <li><b>That version check has limits.</b> It only works on cards from about 2014 on, which have that corner print, and only when the print is readable. Otherwise the card goes in as a default printing. Tap the card in the Library to pick the right one.</li>
+      <li><b>It can't see foil.</b> Every scan is saved as non-foil. Tick <b>Foil</b> before adding, or fix it later from the Library.</li>
+      <li><b>Auto-scan watches for the swap.</b> It waits until a new card is in the frame and held still, reads it once, then waits for the next card, so one card isn't counted twice. For a second copy of the same card, take it out and put it back.</li>
+      <li><b>Repeat cards are quicker.</b> A card it has already looked up this session doesn't need to be looked up again.</li>
+      <li><b>Prices are market prices from Scryfall</b>, matched to the exact printing and foil setting. They're saved when you scan; <b>Refresh prices</b> updates the whole library.</li>
+      <li><b>The same card can live in several places.</b> Copies in different decks, in a sideboard, or in foil are tracked separately, and the header shows the total value and count across all of them.</li>
+      <li><b>Everyone's library is separate.</b> Friends using the same link get their own empty library on their own phone. Nothing is uploaded or shared.</li>
     </ul>
   </div>
 </div>
@@ -288,6 +302,7 @@ function tab(which){
 $('tabScan').onclick=()=>tab('scan');
 $('tabLib').onclick=()=>tab('lib');
 function openHelp(){$('help').classList.remove('hide');stopCam();stopVoice()}
+$('helpJump').onclick=()=>$('helpFeat').scrollIntoView({behavior:'smooth'});
 document.querySelectorAll('.helpOpen').forEach(b=>b.onclick=openHelp);
 $('helpClose').onclick=()=>{$('help').classList.add('hide');if(curTab==='scan')startCam()};
 
@@ -316,7 +331,7 @@ function camFeatures(){
     if(caps.focusMode&&caps.focusMode.indexOf('continuous')>=0)tr.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});
     $('torch').classList.toggle('hide',!caps.torch);$('torch').classList.toggle('pri',torchOn);
     hwZoom=caps.zoom&&caps.zoom.max>caps.zoom.min?caps.zoom:null;
-    const zs=$('zoom');zs.min=hwZoom?hwZoom.min:1;zs.max=hwZoom?Math.min(hwZoom.max,8):4;
+    const zs=$('zoom');zs.min=hwZoom?hwZoom.min:1;zs.max=hwZoom?Math.min(hwZoom.max,3):3;
     setZoom(Math.min(+zs.max,Math.max(+zs.min,zoomVal)));
     const ec=caps.exposureCompensation;
     if(ec&&ec.max>ec.min){
@@ -355,7 +370,7 @@ function grabRegion(fx,fy,fw,fh,tw){
   return crop(cam,vw/2+(g.x+g.w*fx-g.cw/2)/sc,vh/2+(g.y+g.h*fy-g.ch/2)/sc,g.w*fw/sc,g.h*fh/sc,tw);
 }
 let zoomVal=1,dz=1,hwZoom=null,torchOn=false,camIds=[],camId=null;
-try{zoomVal=Math.min(8,Math.max(1,parseFloat(localStorage.getItem('mtg-zoom2'))||1));camId=localStorage.getItem('mtg-cam')||null}catch(e){}
+try{zoomVal=Math.min(3,Math.max(1,parseFloat(localStorage.getItem('mtg-zoom2'))||1));camId=localStorage.getItem('mtg-cam')||null}catch(e){}
 function setZoom(z){
   zoomVal=z;$('zoomv').textContent=z.toFixed(1)+'×';$('zoom').value=z;
   if(hwZoom&&stream){dz=1;cam.style.transform='';stream.getVideoTracks()[0].applyConstraints({advanced:[{zoom:z}]}).catch(()=>{})}
