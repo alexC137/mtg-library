@@ -32,9 +32,11 @@ input[type=text],input[type=search],input[type=number],select{width:100%;padding
 #guide em{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-style:normal;font-size:12px;color:#fff}
 #nocam{padding:22px;text-align:center;color:var(--mute)}
 .msg{margin:10px 0;color:var(--mute);font-size:14px;min-height:20px}
-#msg{margin:6px 0;min-height:40px;color:var(--text)}
+#msg{margin:4px 0;min-height:18px;font-size:13px;line-height:1.3;color:var(--text)}
 .msg.bad{color:var(--bad)}.msg.good{color:var(--ok)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;margin-top:8px}
+#result .card{padding:8px;margin-top:6px}#result .cardtop{gap:10px}#result .cardtop img{width:58px;border-radius:5px}#result h2{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#result .price{font-size:19px;line-height:1.2}#result .grid2{margin-top:6px}#result select{padding:7px 8px;font-size:14px}#result .btn{padding:9px 14px}#result .btn.ok{padding:9px 26px}
+#viewScan>.row .btn{padding-top:10px;padding-bottom:10px}
 .cardtop{display:flex;gap:12px}
 .cardtop img{width:84px;border-radius:8px;background:#000;align-self:flex-start}
 .cardtop h2{margin:0 0 2px;font-size:19px}
@@ -62,7 +64,7 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
 .grp b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .grp span{color:var(--mute);font-size:13px;white-space:nowrap}
 .grp span strong{color:var(--ok)}
-.rc{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);font-size:14px}.rc span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rc small{color:var(--mute)}.rc button{border:1px solid var(--line);background:var(--bg);color:var(--bad);border-radius:8px;width:32px;height:28px}
+.rc{display:flex;align-items:center;gap:8px;padding:3px 0;border-bottom:1px solid var(--line);font-size:14px}.rc span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rc small{color:var(--mute)}.rc button{border:1px solid var(--line);background:var(--bg);color:var(--bad);border-radius:8px;width:32px;height:28px}
 .dk{display:inline-flex;border-radius:50%;flex:none;vertical-align:middle;box-sizing:border-box}
 .dk img,.dk b{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:50% 20%;background:#14161b;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
 .dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px;border:1px solid rgba(255,255,255,.35)}
@@ -114,9 +116,9 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
   <div id="msg" class="msg"></div>
   <div class="row">
     <button id="btnSnap" class="btn pri" style="flex:2">Scan card</button>
-    <button id="btnVoice" class="btn" style="flex:1.3;padding:12px 4px">Voice</button>
-    <button id="btnClear" class="btn" style="flex:1;padding:12px 4px">Clear</button>
-    <label class="btn" style="flex:1;text-align:center;margin:0;padding:12px 4px">Photo<input id="file" type="file" accept="image/*" capture="environment" hidden></label>
+    <button id="btnVoice" class="btn" style="flex:1.3;padding:10px 4px">Voice</button>
+    <button id="btnClear" class="btn" style="flex:1;padding:10px 4px">Clear</button>
+    <label class="btn" style="flex:1;text-align:center;margin:0;padding:10px 4px">Photo<input id="file" type="file" accept="image/*" capture="environment" hidden></label>
   </div>
   <div id="result"></div>
   <div id="recent"></div>
@@ -136,6 +138,11 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
     <input id="exp" type="range" style="flex:1">
     <b id="expv" style="min-width:38px;text-align:right">0</b>
   </div>
+  <div class="row" style="margin-top:8px">
+    <span style="color:var(--mute);font-size:13px;flex:1">Newest cards I own are from</span>
+    <select id="maxYr" style="width:auto;padding:6px 8px"></select>
+  </div>
+  <div style="color:var(--mute);font-size:12px;margin-top:2px">When the printing can't be read off the card, it picks the latest one up to this year.</div>
   <div style="color:var(--mute);font-size:12px"><span id="caminfo"></span> <span id="eng"></span></div>
   <div class="row" style="margin-top:8px">
     <input id="manual" type="search" placeholder="Or type a card name…" enterkeyhint="search">
@@ -235,7 +242,7 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
     <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.55">
       <li><b>It doesn't need a perfect read.</b> Whatever the camera reads is compared against the name of every Magic card ever printed, and the closest match wins. If nothing is close enough, it skips the card instead of guessing.</li>
       <li><b>It keeps checking after the beep.</b> The card is saved the instant the name is recognized, so you can move on. In the background it then reads the small print in the card's bottom-left corner (set code and collector number) and, if that points to a different printing, quietly swaps the saved card to the right version.</li>
-      <li><b>That version check has limits.</b> It only works on cards from about 2014 on, which have that corner print, and only when the print is readable. Otherwise the card goes in as a default printing. Tap the card in the Library to pick the right one.</li>
+      <li><b>That version check has limits.</b> It only works on cards from about 2014 on, which have that corner print, and only when the print is readable. For older cards it tries the collector number and copyright year printed along the bottom edge. If nothing can be read, it uses the latest printing up to the year you set under <b>Newest cards I own are from</b> (below the camera), so a card you've had for years isn't saved as last month's reprint. Tap the card in the Library to pick the right one.</li>
       <li><b>It can't see foil.</b> Every scan is saved as non-foil. Tick <b>Foil</b> before adding, or fix it later from the Library.</li>
       <li><b>Auto-scan watches for the swap.</b> It waits until a new card is in the frame and held still, reads it once, then waits for the next card, so one card isn't counted twice. For a second copy of the same card, take it out and put it back.</li>
       <li><b>Repeat cards are quicker.</b> A card it has already looked up this session doesn't need to be looked up again.</li>
@@ -302,6 +309,8 @@ function tab(which){
 $('tabScan').onclick=()=>tab('scan');
 $('tabLib').onclick=()=>tab('lib');
 function openHelp(){$('help').classList.remove('hide');stopCam();stopVoice()}
+{const y=$('maxYr'),now=new Date().getFullYear();let h='<option value="0">Any year</option>';for(let i=now;i>=1993;i--)h+='<option value="'+i+'">'+i+'</option>';y.innerHTML=h;y.value=String(maxYr);if(y.selectedIndex<0)y.value='0';
+y.onchange=()=>{maxYr=parseInt(y.value)||0;printCache.clear();try{localStorage.setItem('mtg-maxyr',maxYr)}catch(e){}}}
 $('helpJump').onclick=()=>$('helpFeat').scrollIntoView({behavior:'smooth'});
 document.querySelectorAll('.helpOpen').forEach(b=>b.onclick=openHelp);
 $('helpClose').onclick=()=>{$('help').classList.add('hide');if(curTab==='scan')startCam()};
@@ -426,7 +435,7 @@ $('torch').onclick=async()=>{
   try{torchOn=!torchOn;await stream.getVideoTracks()[0].applyConstraints({advanced:[{torch:torchOn}]});$('torch').classList.toggle('pri',torchOn)}catch(e){torchOn=false}
 };
 const grabTop=()=>grabRegion(-0.02,-0.01,1.04,0.15,1000);   // whole top band of the card, so alignment is forgiving
-const grabMeta=()=>grabRegion(0.02,0.915,0.62,0.08,900);
+const grabMeta=()=>grabRegion(0.02,0.905,0.96,0.09,1200); // whole bottom edge: set code, collector number, copyright year
 function crop(src,sx,sy,sw,sh,tw){
   const scale=Math.min(4,(tw||1200)/sw);
   const c=document.createElement('canvas');c.width=Math.max(1,Math.round(sw*scale));c.height=Math.max(1,Math.round(sh*scale));
@@ -567,13 +576,12 @@ function render(){
       <img src="${esc(imgBig(c))}" alt="">
       <div style="flex:1;min-width:0">
         <h2>${esc(c.name)}</h2>
-        <div style="color:var(--mute);font-size:13px">${esc(c.type_line||'')}</div>
+        <div style="color:var(--mute);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.type_line||'')}</div>
         <div class="price" id="rp">${pr!=null?money(pr):'No price'}</div>
-        <div style="color:var(--mute);font-size:12px">Market price via Scryfall (TCGplayer)</div>
+        <div style="color:var(--mute);font-size:11px">${prints.length>1?prints.length+' printings · check the set':'Market price'}</div>
       </div>
     </div>
     <div class="grid2"><select id="printSel">${prints.map(p=>`<option value="${p.id}" ${p.id===c.id?'selected':''}>${esc((p.released_at||'').slice(0,4))} · ${esc(p.set_name)} #${esc(p.collector_number)} · ${priceOf(p,false)!=null?money(priceOf(p,false)):'—'}</option>`).join('')}</select></div>
-    <div style="color:var(--mute);font-size:12px;margin-top:4px">${prints.length>1?prints.length+' printings — check the set matches your card; prices differ a lot between printings.':''}</div>
     <div class="grid2">
       <label class="chk"><input type="checkbox" id="foil" ${foilNow?'checked':''}> Foil</label>
       <div class="qty"><button id="qm">−</button><b id="qn">1</b><button id="qp">+</button></div>
@@ -597,7 +605,7 @@ function beep(){
     o.frequency.value=1250;g.gain.value=0.08;o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+0.07)}catch(e){}
 }
 function renderRecent(){
-  $('recent').innerHTML=recent.length?'<div style="color:var(--mute);font-size:12px;margin-top:8px">Just added</div>'+recent.map((r,i)=>`<div class="rc"><span>${esc(r.name)} <small>${esc(r.setName)} · ${r.price!=null?money(r.price):'no price'}${r.where?' · '+esc(r.where):''}</small></span><button data-i="${i}">✕</button></div>`).join(''):'';
+  $('recent').innerHTML=recent.length?'<div style="color:var(--mute);font-size:11px;margin-top:6px">Just added</div>'+recent.map((r,i)=>`<div class="rc"><span>${esc(r.name)} <small>${esc(r.setName)} · ${r.price!=null?money(r.price):'no price'}${r.where?' · '+esc(r.where):''}</small></span><button data-i="${i}">✕</button></div>`).join(''):'';
 }
 $('recent').onclick=e=>{
   const b=e.target.closest('button');if(!b)return;
@@ -615,7 +623,7 @@ function addToLib(c,foil,n,tgt){ // tgt = {deck,sb}; defaults to the deck curren
   else{it=Object.assign({k,id:c.id,foil,qty:n,price:priceOf(c,foil),added:Date.now(),deck:tgt.deck,sb:!!tgt.sb&&!!tgt.deck},meta(c));lib.push(it)}
   save();updateStats();
   lastAdd={k,n};
-  recent.unshift({k,n,name:c.name,setName:c.set_name,price:it.price,where:whereOf(it)});if(recent.length>4)recent.length=4;renderRecent();beep();
+  recent.unshift({k,n,name:c.name,setName:c.set_name,price:it.price,where:whereOf(it)});if(recent.length>2)recent.length=2;renderRecent();beep();
   $('toastText').innerHTML='<b>Added '+esc(c.name)+(n>1?' ×'+n:'')+'</b><br><span style="color:var(--mute);font-size:12px">'+esc(c.set_name)+' · '+(it.price!=null?money(it.price):'no price')+(whereOf(it)?' · '+esc(whereOf(it)):'')+'</span>';
   $('toast').classList.remove('hide');clearTimeout(toastT);toastT=setTimeout(()=>$('toast').classList.add('hide'),4500);
   if(navigator.vibrate)navigator.vibrate(40);
@@ -693,16 +701,60 @@ async function cardFor(name){
   const k=name.toLowerCase();if(cardByName.has(k))return cardByName.get(k);
   const c=await findByName(name);if(c)cardByName.set(k,c);return c;
 }
-// corner = picture of the card's bottom-left corner (set code + collector number on 2014+ cards)
+// ----- which printing is it? -----
+// 1) bottom edge of the card: set code + collector number (2014+), or "123/249" + copyright year (older frames)
+// 2) otherwise the newest printing that is not newer than the "newest cards I own" year
+let maxYr=0;try{maxYr=parseInt(localStorage.getItem('mtg-maxyr'))||0}catch(e){}
+const printCache=new Map();
+function printsFor(card){ // paper printings, newest first, not newer than maxYr
+  const k=card.oracle_id+'|'+maxYr;if(printCache.has(k))return printCache.get(k);
+  const q=y=>sj(API+'/cards/search?unique=prints&order=released&dir=desc&q='+encodeURIComponent('oracleid:'+card.oracle_id+' game:paper'+(y?' year<='+y:''))).then(d=>d&&d.data||[]);
+  const p=(card.oracle_id?q(maxYr).then(l=>l.length||!maxYr?l:q(0)):Promise.resolve([])).catch(()=>{printCache.delete(k);return []});
+  if(printCache.size>400)printCache.clear();
+  printCache.set(k,p);return p;
+}
+const zz=t=>t.replace(/O/g,'0').replace(/[IL]/g,'1').replace(/S/g,'5').replace(/B/g,'8').replace(/Z/g,'2'); // letters the camera mixes up
+const plain=p=>!p.promo&&!p.oversized&&['promo','memorabilia','token','funny'].indexOf(p.set_type)<0;
+function readCorner(t){
+  const o={toks:t.split(/[^A-Z0-9]+/).filter(Boolean)};
+  o.slash=(t.match(/\b0*(\d{1,4})\s*\/\s*0*(\d{2,4})\b/)||[])[1]||'';
+  o.num=o.slash||(t.match(/\b0*(\d{1,4})\b/)||[])[1]||'';
+  o.set=(t.match(/\b([A-Z][A-Z0-9]{2,4})\s*[^A-Z0-9\s]?\s*EN\b/)||[])[1]||'';
+  const ys=(t.match(/\b(?:19|20)\d\d\b/g)||[]).map(Number).filter(y=>y>=1993&&y<=new Date().getFullYear()+1&&String(y)!==o.slash);
+  o.year=ys.length?Math.max.apply(null,ys):0;
+  return o;
+}
+function choosePrint(list,o){
+  if(!list.length)return null;
+  let best=null,bs=0;
+  for(const p of list){
+    const set=(p.set||'').toUpperCase(),cn=String(p.collector_number||'').replace(/^0+/,''),yr=+(p.released_at||'').slice(0,4);
+    let sc=0;
+    if(set.length>=3&&o.toks.some(x=>x===set||(x.length===set.length&&zz(x)===zz(set))))sc+=3;
+    if(o.slash&&cn===o.slash)sc+=2;else if(o.toks.some(x=>/^\d+$/.test(x)&&x.replace(/^0+/,'')===cn))sc+=1;
+    if(o.year&&(yr===o.year||yr===o.year+1))sc+=1;
+    if(plain(p))sc+=0.1;
+    if(sc>bs){bs=sc;best=p}
+  }
+  if(bs>=3)return best;
+  if(o.year){const l=list.filter(p=>+(p.released_at||'').slice(0,4)===o.year);if(l.length)return l.find(plain)||l[0]}
+  return null;
+}
 async function exactPrint(card,corner){
   try{
-    if(!corner)return card;
-    const t=((await ocr(prep(corner,'gray'),'6',true)).text||'').toUpperCase();
-    const num=(t.match(/\b0*(\d{1,4})\s*\/\s*\d{2,4}/)||t.match(/\b0*(\d{1,4})\b/)||[])[1];
-    const set=(t.match(/\b([A-Z][A-Z0-9]{2,4})\s*[^A-Z0-9\s]?\s*EN\b/)||[])[1];
-    if(!num||!set)return card;
-    const c=await sj(API+'/cards/'+set.toLowerCase()+'/'+num);
-    return c&&c.name===card.name?c:card;
+    const lp=printsFor(card); // starts downloading while the corner is being read
+    let o=readCorner('');
+    if(corner){
+      o=readCorner(((await ocr(prep(corner,'gray'),'6',true)).text||'').toUpperCase());
+      if(o.set&&o.num){
+        const c=await sj(API+'/cards/'+o.set.toLowerCase()+'/'+o.num).catch(()=>null);
+        if(c&&c.name===card.name)return c;
+      }
+    }
+    const list=await lp;
+    const c=choosePrint(list,o);if(c)return c;
+    if(maxYr&&list.length&&+(card.released_at||'').slice(0,4)>maxYr)return list.find(plain)||list[0];
+    return card;
   }catch(e){return card}
 }
 // Show the card straight away, then quietly switch to the exact printing if the corner text can be read.
@@ -716,7 +768,7 @@ async function showThenRefine(card,corner){
 function addFast(card,corner){
   const tgt={deck:curDeck,sb:curSb};
   addToLib(card,false,1,tgt);
-  if(corner)exactPrint(card,corner).then(c=>{if(c.id!==card.id)swapPrint(card,c,tgt)}).catch(()=>{});
+  exactPrint(card,corner).then(c=>{if(c.id!==card.id)swapPrint(card,c,tgt)}).catch(()=>{});
 }
 function swapPrint(a,b,tgt){ // move one non-foil copy from printing a to printing b, in the same deck
   const ka=keyOf(a.id,false,tgt.deck,tgt.sb),kb=keyOf(b.id,false,tgt.deck,tgt.sb),it=lib.find(x=>x.k===ka);if(!it)return;
@@ -900,7 +952,7 @@ $('file').onchange=async e=>{
 async function manual(){
   const q=$('manual').value;if(busy||!q.trim())return;busy=true;
   try{setMsg('Looking up…');const c=await findByName(q);
-    if(!c)setMsg('No match for "'+q+'".','bad');else{setMsg('');$('manual').value='';await show(c)}
+    if(!c)setMsg('No match for "'+q+'".','bad');else{setMsg('');$('manual').value='';await showThenRefine(c,null)}
   }catch(e){setMsg(e.message,'bad')}finally{busy=false}
 }
 $('btnManual').onclick=manual;
