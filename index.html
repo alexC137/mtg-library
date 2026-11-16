@@ -309,8 +309,6 @@ function tab(which){
 $('tabScan').onclick=()=>tab('scan');
 $('tabLib').onclick=()=>tab('lib');
 function openHelp(){$('help').classList.remove('hide');stopCam();stopVoice()}
-{const y=$('maxYr'),now=new Date().getFullYear();let h='<option value="0">Any year</option>';for(let i=now;i>=1993;i--)h+='<option value="'+i+'">'+i+'</option>';y.innerHTML=h;y.value=String(maxYr);if(y.selectedIndex<0)y.value='0';
-y.onchange=()=>{maxYr=parseInt(y.value)||0;printCache.clear();try{localStorage.setItem('mtg-maxyr',maxYr)}catch(e){}}}
 $('helpJump').onclick=()=>$('helpFeat').scrollIntoView({behavior:'smooth'});
 document.querySelectorAll('.helpOpen').forEach(b=>b.onclick=openHelp);
 $('helpClose').onclick=()=>{$('help').classList.add('hide');if(curTab==='scan')startCam()};
@@ -706,6 +704,8 @@ async function cardFor(name){
 // 2) otherwise the newest printing that is not newer than the "newest cards I own" year
 let maxYr=0;try{maxYr=parseInt(localStorage.getItem('mtg-maxyr'))||0}catch(e){}
 const printCache=new Map();
+{const y=$('maxYr'),now=new Date().getFullYear();let h='<option value="0">Any year</option>';for(let i=now;i>=1993;i--)h+='<option value="'+i+'">'+i+'</option>';y.innerHTML=h;y.value=String(maxYr);if(y.selectedIndex<0)y.value='0';
+y.onchange=()=>{maxYr=parseInt(y.value)||0;printCache.clear();try{localStorage.setItem('mtg-maxyr',maxYr)}catch(e){}}}
 function printsFor(card){ // paper printings, newest first, not newer than maxYr
   const k=card.oracle_id+'|'+maxYr;if(printCache.has(k))return printCache.get(k);
   const q=y=>sj(API+'/cards/search?unique=prints&order=released&dir=desc&q='+encodeURIComponent('oracleid:'+card.oracle_id+' game:paper'+(y?' year<='+y:''))).then(d=>d&&d.data||[]);
