@@ -118,6 +118,11 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
     <button id="btnClear" class="btn" style="flex:1;padding:12px 4px">Clear</button>
     <label class="btn" style="flex:1;text-align:center;margin:0;padding:12px 4px">Photo<input id="file" type="file" accept="image/*" capture="environment" hidden></label>
   </div>
+  <div id="rsBar" class="card hide" style="border-color:var(--acc)">
+    <div style="font-size:14px">Rescanning <b id="rsName"></b> <span id="rsWas" style="color:var(--mute);font-size:12px"></span></div>
+    <div style="color:var(--mute);font-size:12px;margin:2px 0 8px">Hold the card in the frame (same as scanning) and make sure the small print in the bottom-left corner is sharp and well lit. Zoom in a bit if needed.</div>
+    <div class="row"><button id="rsGo" class="btn ok" style="flex:2">Read printing</button><button id="rsPick" class="btn hide" style="flex:1.4">Pick by hand</button><button id="rsCancel" class="btn" style="flex:1">Cancel</button></div>
+  </div>
   <div id="result"></div>
   <div id="recent"></div>
   <div class="row" style="margin-top:10px;gap:12px">
@@ -141,7 +146,7 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
     <input id="manual" type="search" placeholder="Or type a card name…" enterkeyhint="search">
     <button id="btnManual" class="btn">Find</button>
   </div>
-  <div style="color:var(--mute);font-size:11px;margin-top:10px;text-align:center">Version: Nov 15 rollback</div>
+  <div style="color:var(--mute);font-size:11px;margin-top:10px;text-align:center">Version: Nov 17 (printing flags)</div>
   <div id="dbgwrap" class="hide" style="margin-top:10px"><div style="color:var(--mute);font-size:12px">What the scanner sees:</div><canvas id="dbg" style="width:100%;border:1px solid var(--line);border-radius:6px"></canvas></div>
 </section>
 
@@ -168,6 +173,7 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
     <button class="chip" id="fFoil">Foil only</button>
     <button class="chip" id="fDup">Duplicates (2+)</button>
     <button class="chip" id="fNoPrice">No price</button>
+    <button class="chip" id="fChk">⚠ Needs a closer look</button>
     <button class="chip" id="fClear">Clear filters</button>
   </div>
   <div class="summary" id="summary"></div>
@@ -236,7 +242,7 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
     <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.55">
       <li><b>It doesn't need a perfect read.</b> Whatever the camera reads is compared against the name of every Magic card ever printed, and the closest match wins. If nothing is close enough, it skips the card instead of guessing.</li>
       <li><b>It keeps checking after the beep.</b> The card is saved the instant the name is recognized, so you can move on. In the background it then reads the small print in the card's bottom-left corner (set code and collector number) and, if that points to a different printing, quietly swaps the saved card to the right version.</li>
-      <li><b>That version check has limits.</b> It only works on cards from about 2014 on, which have that corner print, and only when the print is readable. Otherwise the card goes in as a default printing. Tap the card in the Library to pick the right one.</li>
+      <li><b>That version check has limits.</b> It only works on cards from about 2014 on, which have that corner print, and only when the print is readable. Otherwise the card goes in as a default printing. Those cards are marked <b>⚠ check printing</b> as you scan and <b>⚠ CHECK</b> in the Library. Tap <b>⚠ Needs a closer look</b> in the Library to list them, then tap a card to pick the printing by hand, <b>Rescan</b> it with the camera, or mark it <b>Looks right</b>. Cards with only one printing are never flagged.</li>
       <li><b>It can't see foil.</b> Every scan is saved as non-foil. Tick <b>Foil</b> before adding, or fix it later from the Library.</li>
       <li><b>Auto-scan watches for the swap.</b> It waits until a new card is in the frame and held still, reads it once, then waits for the next card, so one card isn't counted twice. For a second copy of the same card, take it out and put it back.</li>
       <li><b>Repeat cards are quicker.</b> A card it has already looked up this session doesn't need to be looked up again.</li>
@@ -268,6 +274,12 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:14
       <button id="cdSave" class="btn ok" style="flex:2">Save changes</button>
       <button id="cdDel" class="btn" style="flex:1;color:var(--bad)">Remove</button>
     </div>
+    <div id="cdChk" class="hide" style="margin-top:10px;padding:8px 10px;border:1px solid var(--acc);border-radius:10px;font-size:13px">
+      <div style="color:var(--acc);font-weight:600">⚠ Printing not confirmed</div>
+      <div style="color:var(--mute);margin:2px 0 8px">The scanner couldn't read the set and number in the bottom-left corner, so this may be the wrong version. Pick the right one above and save, rescan it, or mark it as correct.</div>
+      <button id="cdOk" class="btn sm">Looks right</button>
+    </div>
+    <button id="cdRescan" class="btn sm" style="margin-top:10px;width:100%">Rescan printing with the camera</button>
     <div id="cdMsg" style="color:var(--mute);font-size:13px;margin-top:6px"></div>
   </div>
 </div>
@@ -546,8 +558,9 @@ function meta(c){
 }
 
 /* ---------- result panel ---------- */
-let cur=null,prints=[];
-async function show(card){
+let cur=null,prints=[],curV=null,userPicked=false;
+async function show(card,v){
+  curV=v||null;userPicked=false;
   cur=card;prints=[card];render();
   try{
     if(card.prints_search_uri){
@@ -574,7 +587,7 @@ function render(){
       </div>
     </div>
     <div class="grid2"><select id="printSel">${prints.map(p=>`<option value="${p.id}" ${p.id===c.id?'selected':''}>${esc((p.released_at||'').slice(0,4))} · ${esc(p.set_name)} #${esc(p.collector_number)} · ${priceOf(p,false)!=null?money(priceOf(p,false)):'—'}</option>`).join('')}</select></div>
-    <div style="color:var(--mute);font-size:12px;margin-top:4px">${prints.length>1?prints.length+' printings — check the set matches your card; prices differ a lot between printings.':''}</div>
+    <div style="color:var(--mute);font-size:12px;margin-top:4px">${curV&&curV.r&&!curV.r.sure&&!userPicked?'<span style="color:var(--acc)">⚠ Couldn\'t read the printing off the card. Pick it here, or it\'ll be flagged for a closer look.</span>':prints.length>1?prints.length+' printings — check the set matches your card; prices differ a lot between printings.':''}</div>
     <div class="grid2">
       <label class="chk"><input type="checkbox" id="foil" ${foilNow?'checked':''}> Foil</label>
       <div class="qty"><button id="qm">−</button><b id="qn">1</b><button id="qp">+</button></div>
@@ -587,9 +600,17 @@ function render(){
   $('qm').onclick=()=>{q=Math.max(1,q-1);$('qn').textContent=q};
   $('qp').onclick=()=>{q++;$('qn').textContent=q};
   $('foil').onchange=()=>{const p=priceOf(cur,$('foil').checked);$('rp').textContent=p!=null?money(p):'No price'};
-  $('printSel').onchange=e=>{const p=prints.find(x=>x.id===e.target.value);if(p){cur=p;render()}};
+  $('printSel').onchange=e=>{const p=prints.find(x=>x.id===e.target.value);if(p){cur=p;userPicked=true;render()}};
   $('skip').onclick=()=>{cur=null;render();setMsg('')};
-  $('add').onclick=()=>{const c2=cur,f=$('foil').checked;cur=null;render();addToLib(c2,f,q)};
+  $('add').onclick=()=>{
+    const c2=cur,f=$('foil').checked,v=curV,picked=userPicked,tgt={deck:curDeck,sb:curSb};
+    cur=null;curV=null;render();addToLib(c2,f,q,tgt);
+    if(v&&!picked)v.p.then(r=>{ // the printing check may finish after Add was tapped
+      if(r.c.id===c2.id){if(!r.sure)flagEntry(keyOf(c2.id,f,tgt.deck,tgt.sb))}
+      else if(r.sure&&!f){for(let i=0;i<q;i++)swapPrint(c2,r.c,tgt)}
+      else flagEntry(keyOf(c2.id,f,tgt.deck,tgt.sb));
+    }).catch(()=>{});
+  };
 }
 let lastAdd=null,toastT=null,actx=null;
 const recent=[]; // last few cards added this visit, shown under the camera
@@ -598,7 +619,7 @@ function beep(){
     o.frequency.value=1250;g.gain.value=0.08;o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+0.07)}catch(e){}
 }
 function renderRecent(){
-  $('recent').innerHTML=recent.length?'<div style="color:var(--mute);font-size:12px;margin-top:8px">Just added</div>'+recent.map((r,i)=>`<div class="rc"><span>${esc(r.name)} <small>${esc(r.setName)} · ${r.price!=null?money(r.price):'no price'}${r.where?' · '+esc(r.where):''}</small></span><button data-i="${i}">✕</button></div>`).join(''):'';
+  $('recent').innerHTML=recent.length?'<div style="color:var(--mute);font-size:12px;margin-top:8px">Just added</div>'+recent.map((r,i)=>`<div class="rc"><span>${esc(r.name)} <small>${esc(r.setName)} · ${r.price!=null?money(r.price):'no price'}${r.where?' · '+esc(r.where):''}</small>${r.chk?' <small style="color:var(--acc)">⚠ check printing</small>':''}</span><button data-i="${i}">✕</button></div>`).join(''):'';
 }
 $('recent').onclick=e=>{
   const b=e.target.closest('button');if(!b)return;
@@ -616,7 +637,7 @@ function addToLib(c,foil,n,tgt){ // tgt = {deck,sb}; defaults to the deck curren
   else{it=Object.assign({k,id:c.id,foil,qty:n,price:priceOf(c,foil),added:Date.now(),deck:tgt.deck,sb:!!tgt.sb&&!!tgt.deck},meta(c));lib.push(it)}
   save();updateStats();
   lastAdd={k,n};
-  recent.unshift({k,n,name:c.name,setName:c.set_name,price:it.price,where:whereOf(it)});if(recent.length>4)recent.length=4;renderRecent();beep();
+  recent.unshift({k,n,name:c.name,setName:c.set_name,price:it.price,where:whereOf(it),chk:it.chk});if(recent.length>4)recent.length=4;renderRecent();beep();
   $('toastText').innerHTML='<b>Added '+esc(c.name)+(n>1?' ×'+n:'')+'</b><br><span style="color:var(--mute);font-size:12px">'+esc(c.set_name)+' · '+(it.price!=null?money(it.price):'no price')+(whereOf(it)?' · '+esc(whereOf(it)):'')+'</span>';
   $('toast').classList.remove('hide');clearTimeout(toastT);toastT=setTimeout(()=>$('toast').classList.add('hide'),4500);
   if(navigator.vibrate)navigator.vibrate(40);
@@ -695,35 +716,57 @@ async function cardFor(name){
   const c=await findByName(name);if(c)cardByName.set(k,c);return c;
 }
 // corner = picture of the card's bottom-left corner (set code + collector number on 2014+ cards)
-async function exactPrint(card,corner){
+async function exactPrint(card,corner){ // -> {c: printing, sure: was it confirmed from the corner text}
   try{
-    if(!corner)return card;
+    if(!corner)return {c:card,sure:false};
     const t=((await ocr(prep(corner,'gray'),'6',true)).text||'').toUpperCase();
     const num=(t.match(/\b0*(\d{1,4})\s*\/\s*\d{2,4}/)||t.match(/\b0*(\d{1,4})\b/)||[])[1];
     const set=(t.match(/\b([A-Z][A-Z0-9]{2,4})\s*[^A-Z0-9\s]?\s*EN\b/)||[])[1];
-    if(!num||!set)return card;
+    if(!num||!set)return {c:card,sure:false};
     const c=await sj(API+'/cards/'+set.toLowerCase()+'/'+num);
-    return c&&c.name===card.name?c:card;
-  }catch(e){return card}
+    return c&&c.name===card.name?{c,sure:true}:{c:card,sure:false};
+  }catch(e){return {c:card,sure:false}}
+}
+const nPrints=new Map(); // oracle id -> promise of how many printings exist
+function onePrinting(card){
+  const k=card.oracle_id||card.id;
+  if(!nPrints.has(k))nPrints.set(k,(card.prints_search_uri?sj(card.prints_search_uri).then(d=>d?(d.total_cards||(d.data||[]).length):0):Promise.resolve(0)).catch(()=>{nPrints.delete(k);return 0}));
+  return nPrints.get(k).then(n=>n===1);
+}
+async function verdict(card,corner){const r=await exactPrint(card,corner);if(!r.sure&&await onePrinting(r.c))r.sure=true;return r}
+// Flag a library entry whose printing could not be confirmed, so it can be checked later
+function flagEntry(k){
+  const it=lib.find(x=>x.k===k);if(!it||it.chk)return;
+  it.chk=1;save();
+  const r=recent.find(x=>x.k===k);if(r){r.chk=1;renderRecent()}
+  if(navigator.vibrate)navigator.vibrate([30,60,30]);
 }
 // Show the card straight away, then quietly switch to the exact printing if the corner text can be read.
 async function showThenRefine(card,corner){
-  const p=exactPrint(card,corner);
-  await show(card);
-  const c=await p;
-  if(c.id!==card.id&&cur&&cur.id===card.id){cur=c;if(!prints.find(x=>x.id===c.id))prints.unshift(c);render()}
+  const v={p:verdict(card,corner),r:null};
+  const shown=show(card,v);
+  const r=await v.p;v.r=r;
+  if(curV===v&&cur&&!userPicked){
+    if(r.c.id!==cur.id){cur=r.c;if(!prints.find(x=>x.id===r.c.id))prints.unshift(r.c)}
+    render();
+  }
+  await shown;
 }
 // Add immediately, then correct the printing in the background if the corner text says otherwise.
 function addFast(card,corner){
   const tgt={deck:curDeck,sb:curSb};
   addToLib(card,false,1,tgt);
-  if(corner)exactPrint(card,corner).then(c=>{if(c.id!==card.id)swapPrint(card,c,tgt)}).catch(()=>{});
+  verdict(card,corner).then(r=>{
+    if(r.c.id!==card.id)swapPrint(card,r.c,tgt);
+    if(!r.sure)flagEntry(keyOf(r.c.id,false,tgt.deck,tgt.sb));
+  }).catch(()=>{});
 }
 function swapPrint(a,b,tgt){ // move one non-foil copy from printing a to printing b, in the same deck
   const ka=keyOf(a.id,false,tgt.deck,tgt.sb),kb=keyOf(b.id,false,tgt.deck,tgt.sb),it=lib.find(x=>x.k===ka);if(!it)return;
   it.qty--;if(it.qty<=0)lib=lib.filter(x=>x!==it);
   let nb=lib.find(x=>x.k===kb);
   if(nb)nb.qty++;else{nb=Object.assign({k:kb,id:b.id,foil:false,qty:1,price:priceOf(b,false),added:Date.now(),deck:tgt.deck,sb:!!tgt.sb&&!!tgt.deck},meta(b));lib.push(nb)}
+  if(it.chk&&it.qty<=0)nb.chk=1;
   if(lastAdd&&lastAdd.k===ka)lastAdd.k=kb;
   const r=recent.find(x=>x.k===ka);if(r){r.k=kb;r.setName=b.set_name;r.price=nb.price}
   save();updateStats();renderRecent();
@@ -1020,14 +1063,14 @@ const colorKey=i=>{const c=i.col||[];return c.length===0?'C':c.length>1?'M':c[0]
 const rarKey=i=>['common','uncommon','rare','mythic'].indexOf(i.rar)>=0?i.rar:'other';
 const RORDER={mythic:0,rare:1,uncommon:2,common:3,other:4};
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
-const F={colors:new Set(),foil:false,dup:false,noPrice:false};
+const F={colors:new Set(),foil:false,dup:false,noPrice:false,chk:false};
 const open=new Set();
 
 $('colors').innerHTML=COLORS.map(c=>`<button class="chip" data-c="${c[0]}">${c[1]}</button>`).join('');
 $('colors').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;const c=b.dataset.c;F.colors.has(c)?F.colors.delete(c):F.colors.add(c);b.classList.toggle('on');renderLib()};
-[['fFoil','foil'],['fDup','dup'],['fNoPrice','noPrice']].forEach(([id,key])=>{$(id).onclick=()=>{F[key]=!F[key];$(id).classList.toggle('on',F[key]);renderLib()}});
+[['fFoil','foil'],['fDup','dup'],['fNoPrice','noPrice'],['fChk','chk']].forEach(([id,key])=>{$(id).onclick=()=>{F[key]=!F[key];$(id).classList.toggle('on',F[key]);renderLib()}});
 $('fClear').onclick=()=>{
-  F.colors.clear();F.foil=F.dup=F.noPrice=false;
+  F.colors.clear();F.foil=F.dup=F.noPrice=F.chk=false;
   document.querySelectorAll('#viewLib .chip.on').forEach(b=>b.classList.remove('on'));
   $('filter').value='';$('fSet').value='';$('fType').value='';$('fRar').value='';$('fMin').value='';$('fDeck').value='';$('fBoard').value='';renderLib();
 };
@@ -1050,14 +1093,14 @@ function filtered(){
     (!min||(i.price||0)>=min)&&
     (!fd||(fd==='__none'?!deckById(i.deck):i.deck===fd))&&(!fb||(fb==='s'?!!i.sb:!i.sb))&&
     (!F.colors.size||F.colors.has(colorKey(i))||(i.col||[]).some(c=>F.colors.has(c)))&&
-    (!F.foil||i.foil)&&(!F.dup||i.qty>1)&&(!F.noPrice||i.price==null));
+    (!F.foil||i.foil)&&(!F.dup||i.qty>1)&&(!F.noPrice||i.price==null)&&(!F.chk||!!i.chk));
 }
 const SORTS={value:(x,y)=>(y.price||0)*y.qty-(x.price||0)*x.qty,price:(x,y)=>(y.price||0)-(x.price||0),
   name:(x,y)=>x.name.localeCompare(y.name),cmc:(x,y)=>(x.cmc||0)-(y.cmc||0)||x.name.localeCompare(y.name),recent:(x,y)=>y.added-x.added};
 function itemHtml(i){
   return `<div class="item" data-k="${i.k}">
     <img loading="lazy" src="${thumb(i.id)}" alt="">
-    <div class="m"><div class="n">${esc(i.name)} ${i.foil?'<span class="foil">FOIL</span>':''}</div>
+    <div class="m"><div class="n">${esc(i.name)} ${i.foil?'<span class="foil">FOIL</span>':''}${i.chk?' <span class="foil" style="color:var(--acc)">⚠ CHECK</span>':''}</div>
       <div class="s">${esc(i.setName)} #${esc(i.cn)} · ${esc(cap(rarKey(i)))} · ${esc(i.type||'')}</div>
       ${deckById(i.deck)?`<div class="s">${deckIcon(deckById(i.deck),16)} ${esc(whereOf(i))}</div>`:''}
       <div class="qty" style="margin-top:4px"><button data-a="m">−</button><b>${i.qty}</b><button data-a="p">+</button><button data-a="d" style="width:auto;padding:0 8px;font-size:12px;color:var(--bad)">Remove</button></div></div>
@@ -1065,6 +1108,7 @@ function itemHtml(i){
   </div>`;
 }
 function renderLib(){
+  {const nc=lib.filter(i=>i.chk).length;$('fChk').textContent='⚠ Needs a closer look'+(nc?' ('+nc+')':'')}
   const a=filtered().sort(SORTS[$('sort').value]);
   let n=0,v=0;a.forEach(i=>{n+=i.qty;v+=(i.price||0)*i.qty});
   $('summary').innerHTML=lib.length?`Showing <strong>${n.toLocaleString()}</strong> cards (${a.length.toLocaleString()} unique) worth <strong>${money(v)}</strong>`:'';
@@ -1129,6 +1173,7 @@ async function openCard(it){
   deckOptions($('cdDeck'),'<option value="">No deck</option>',it.deck||'');
   $('cdBoard').value=it.sb?'s':'m';
   $('cdDel').textContent='Remove';$('cdMsg').textContent='Loading printings…';
+  $('cdChk').classList.toggle('hide',!it.chk);
   cdShowImg();cdShowPrice();
   $('cd').classList.remove('hide');
   try{
@@ -1163,13 +1208,49 @@ $('cdSave').onclick=()=>{
   const o=lib.find(x=>x.k===k);
   if(o){o.qty+=cdQty;if(pc){o.price=price}}
   else{
-    const n=Object.assign({},it,{k,id:newId,foil,deck,sb,qty:cdQty,price});
+    const n=Object.assign({},it,{k,id:newId,foil,deck,sb,qty:cdQty,price});delete n.chk; // saved by hand = checked
     if(pc)Object.assign(n,meta(pc));
     lib.push(n);
   }
   save();updateStats();buildFilterOptions();renderLib();closeCard();
   setLib('Saved '+(pc?pc.name:it.name)+(o?' (merged with a matching entry)':'')+'.','good');
 };
+let rsK=null;
+function rsItem(){return rsK&&lib.find(x=>x.k===rsK)}
+function startRescan(it){
+  closeCard();
+  if(autoOn){autoOn=false;$('auto').checked=false}
+  rsK=it.k;$('rsName').textContent=it.name;$('rsWas').textContent='(now: '+(it.setName||'')+' #'+(it.cn||'')+')';
+  $('rsPick').classList.add('hide');$('rsBar').classList.remove('hide');
+  cur=null;render();setMsg('');tab('scan');
+}
+function endRescan(){rsK=null;$('rsBar').classList.add('hide')}
+$('rsCancel').onclick=()=>{endRescan();setMsg('')};
+$('rsPick').onclick=()=>{const it=rsItem();endRescan();if(it)openCard(it)};
+$('rsGo').onclick=async()=>{
+  const it=rsItem();if(!it){endRescan();return}
+  if(!stream||!cam.videoWidth){setMsg('Camera not ready.','bad');return}
+  if(busy)return;busy=true;$('rsGo').disabled=true;
+  try{
+    setMsg('Reading the corner…');
+    const corner=grabMeta(),card=await sj(API+'/cards/'+it.id);
+    if(!card)throw new Error('Could not look up that card.');
+    const r=await verdict(card,corner);
+    if(!r.sure){setMsg('Still couldn\'t read the set and number. Try more light or zoom and tap Read printing again, or pick it by hand.','bad');$('rsPick').classList.remove('hide');return}
+    const k=keyOf(r.c.id,it.foil,it.deck,it.sb);
+    lib=lib.filter(x=>x!==it);
+    const o=lib.find(x=>x.k===k),price=priceOf(r.c,it.foil);
+    if(o){o.qty+=it.qty;o.price=price;delete o.chk}
+    else{const n=Object.assign({},it,meta(r.c),{k,id:r.c.id,price});delete n.chk;lib.push(n)}
+    save();updateStats();buildFilterOptions();renderLib();endRescan();beep();
+    setMsg((r.c.id===it.id?'Confirmed: ':'Changed to ')+r.c.set_name+' #'+r.c.collector_number+' for '+it.name+(o?' (merged with a matching entry).':'.'),'good');
+  }catch(e){setMsg(e.message||String(e),'bad')}
+  finally{busy=false;$('rsGo').disabled=false}
+};
+$('cdOk').onclick=()=>{
+  if(!cdIt)return;delete cdIt.chk;save();renderLib();$('cdChk').classList.add('hide');setLib('Marked '+cdIt.name+' as correct.','good');
+};
+$('cdRescan').onclick=()=>{if(cdIt)startRescan(cdIt)};
 $('cdDel').onclick=()=>{
   if(!cdIt)return;
   if(!cdDelArm){cdDelArm=true;$('cdDel').textContent='Tap again';return}
